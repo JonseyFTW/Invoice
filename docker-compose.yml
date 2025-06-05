@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-invoice_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-invoice_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-password}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this}
+      GMAIL_USER: ${GMAIL_USER}
+      GMAIL_PASS: ${GMAIL_PASS}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      COMPANY_NAME: ${COMPANY_NAME:-Home Repair Solutions}
+      COMPANY_ADDRESS: ${COMPANY_ADDRESS:-123 Main St, City, State 12345}
+      COMPANY_PHONE: ${COMPANY_PHONE:-(555) 123-4567}
+      COMPANY_EMAIL: ${COMPANY_EMAIL:-info@homerepair.com}
+      DEFAULT_TAX_RATE: ${DEFAULT_TAX_RATE:-8.25}
+    volumes:
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    environment:
+      REACT_APP_API_URL: ${FRONTEND_API_URL:-http://localhost:5000/api}
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:
+  logs_data:
