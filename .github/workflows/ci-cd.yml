@@ -1,0 +1,469 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: "18"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Test Backend
+  test-backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run backend linting
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASS: test_password
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_jwt_secret_for_testing_only
+
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./backend/coverage
+          flags: backend
+          name: backend-coverage
+
+  # Test Frontend
+  test-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run frontend linting
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm run test:ci
+        env:
+          CI: true
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./frontend/coverage
+          flags: frontend
+          name: frontend-coverage
+
+  # Security Scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Run npm audit (backend)
+        working-directory: ./backend
+        run: npm audit --audit-level high
+
+      - name: Run npm audit (frontend)
+        working-directory: ./frontend
+        run: npm audit --audit-level high
+
+  # Build and Push Docker Images
+  build-images:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, security-scan]
+    if: github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        component: [backend, frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.component }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.component }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Deploy to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: github.ref == 'refs/heads/main'
+
+    environment:
+      name: staging
+      url: https://staging.yourdomain.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/invoice-app-staging
+            git pull origin main
+
+            # Update images
+            docker-compose pull
+
+            # Deploy with zero downtime
+            docker-compose up -d --remove-orphans
+
+            # Wait for health check
+            sleep 30
+
+            # Verify deployment
+            curl -f http://localhost/health || exit 1
+
+            echo "Staging deployment completed successfully"
+
+      - name: Run smoke tests
+        run: |
+          # Wait for deployment to be ready
+          sleep 60
+
+          # Run basic smoke tests
+          curl -f https://staging.yourdomain.com/health
+          curl -f https://staging.yourdomain.com/api/health
+
+      - name: Notify deployment
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: "#deployments"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+
+  # Deploy to Production
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+
+    environment:
+      name: production
+      url: https://yourdomain.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create backup
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            cd /opt/invoice-app
+
+            # Create database backup
+            docker exec invoice-app-db-1 pg_dumpall -U postgres > backup-$(date +%Y%m%d-%H%M%S).sql
+
+            # Create application backup
+            tar -czf app-backup-$(date +%Y%m%d-%H%M%S).tar.gz \
+              .env docker-compose.yml uploads/
+
+            echo "Backup created successfully"
+
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            cd /opt/invoice-app
+
+            # Update code
+            git pull origin main
+
+            # Update images
+            docker-compose pull
+
+            # Deploy with rolling update
+            docker-compose up -d --remove-orphans
+
+            # Wait for services to be ready
+            sleep 60
+
+            # Run database migrations
+            docker-compose exec -T backend npm run migrate
+
+            # Verify deployment
+            curl -f http://localhost/health || exit 1
+
+            echo "Production deployment completed successfully"
+
+      - name: Run production tests
+        run: |
+          # Wait for deployment to be ready
+          sleep 60
+
+          # Run comprehensive health checks
+          curl -f https://yourdomain.com/health
+          curl -f https://yourdomain.com/api/health
+
+          # Test critical endpoints
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://yourdomain.com)
+          if [ $response -ne 200 ]; then
+            echo "Frontend health check failed"
+            exit 1
+          fi
+
+      - name: Notify successful deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: "#deployments"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          text: "🚀 Production deployment successful!"
+          fields: repo,message,commit,author
+
+      - name: Notify failed deployment
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: "#deployments"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          text: "🚨 Production deployment failed!"
+          fields: repo,message,commit,author
+
+  # Performance Testing
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run performance tests
+        run: |
+          cat > performance-test.js << 'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
+
+          export let options = {
+            stages: [
+              { duration: '30s', target: 10 },
+              { duration: '1m', target: 20 },
+              { duration: '30s', target: 0 },
+            ],
+          };
+
+          export default function () {
+            // Test homepage
+            let response = http.get('https://staging.yourdomain.com');
+            check(response, {
+              'homepage status is 200': (r) => r.status === 200,
+              'homepage load time < 2s': (r) => r.timings.duration < 2000,
+            });
+
+            // Test health endpoint
+            response = http.get('https://staging.yourdomain.com/health');
+            check(response, {
+              'health status is 200': (r) => r.status === 200,
+              'health response time < 500ms': (r) => r.timings.duration < 500,
+            });
+
+            sleep(1);
+          }
+          EOF
+
+          k6 run performance-test.js
+
+  # End-to-End Testing
+  e2e-test:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Playwright
+        working-directory: ./e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Run E2E tests
+        working-directory: ./e2e
+        run: npx playwright test
+        env:
+          BASE_URL: https://staging.yourdomain.com
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 30
+
+  # Cleanup
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+
+    steps:
+      - name: Cleanup old images
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            # Remove unused Docker images
+            docker image prune -f
+
+            # Remove old backups (keep last 7 days)
+            find /opt/invoice-app -name "backup-*.sql" -mtime +7 -delete
+            find /opt/invoice-app -name "app-backup-*.tar.gz" -mtime +7 -delete
+
+      - name: Update deployment status
+        run: |
+          echo "Deployment pipeline completed"
+          echo "Staging: https://staging.yourdomain.com"
+          echo "Production: https://yourdomain.com"

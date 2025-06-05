@@ -1,34 +1,83 @@
 {
   "name": "invoice-frontend",
   "version": "1.0.0",
+  "description": "Invoice Management System Frontend",
   "private": true,
+  "homepage": ".",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.16.4",
-    "@testing-library/react": "^13.3.0",
-    "@testing-library/user-event": "^13.5.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.15.0",
+    "react-router-dom": "^6.20.1",
     "react-scripts": "5.0.1",
-    "axios": "^1.5.0",
-    "react-hook-form": "^7.45.4",
+    "axios": "^1.6.2",
+    "react-hook-form": "^7.48.2",
     "react-hot-toast": "^2.4.1",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "^0.295.0",
     "date-fns": "^2.30.0",
     "recharts": "^2.8.0",
-    "react-dropzone": "^14.2.3"
+    "react-dropzone": "^14.2.3",
+    "clsx": "^2.0.0",
+    "tailwindcss": "^3.3.6",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
+    "framer-motion": "^10.16.16",
+    "react-query": "^3.39.3",
+    "zustand": "^4.4.7",
+    "react-table": "^7.8.0",
+    "react-select": "^5.8.0",
+    "react-datepicker": "^4.25.0",
+    "react-helmet-async": "^2.0.4",
+    "react-error-boundary": "^4.0.11",
+    "react-intersection-observer": "^9.5.3",
+    "lodash": "^4.17.21",
+    "validator": "^13.11.0",
+    "file-saver": "^2.0.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
+    "react-virtualized": "^9.22.5",
+    "react-window": "^1.8.8",
+    "react-spring": "^9.7.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.42",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.55.0",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.1.1",
+    "prettier-plugin-tailwindcss": "^0.5.7",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "@craco/craco": "^7.1.0",
+    "craco-alias": "^3.0.1",
+    "webpack-bundle-analyzer": "^4.10.1",
+    "source-map-explorer": "^2.5.3"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "analyze": "npm run build && npx serve -s build",
+    "analyze:bundle": "npm run build && npx react-scripts build && npx source-map-explorer 'build/static/js/*.js'",
+    "preview": "npm run build && npx serve -s build -l 3000",
+    "type-check": "tsc --noEmit",
+    "docker:build": "docker build -t invoice-frontend .",
+    "docker:run": "docker run -p 3000:80 invoice-frontend",
+    "clean": "rm -rf build node_modules/.cache",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "test:ci": "cross-env CI=true react-scripts test --coverage --watchAll=false"
   },
   "browserslist": {
     "production": [
@@ -42,5 +91,57 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5000"
+  "proxy": "http://localhost:5000",
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
+    "rules": {
+      "react/prop-types": "off",
+      "react/react-in-jsx-scope": "off",
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "prefer-const": "warn",
+      "no-console": ["warn", { "allow": ["warn", "error"] }]
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 80,
+    "tabWidth": 2,
+    "useTabs": false,
+    "plugins": ["prettier-plugin-tailwindcss"]
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.{json,css,md}": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/index.js",
+      "!src/reportWebVitals.js",
+      "!src/**/*.d.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    }
+  }
 }
