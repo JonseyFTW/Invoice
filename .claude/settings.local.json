@@ -4,7 +4,17 @@
       "Bash(touch:*)",
       "Bash(chmod:*)",
       "Bash(npm run lint:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker-compose restart:*)"
     ],
     "deny": []
   }

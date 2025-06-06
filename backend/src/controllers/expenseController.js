@@ -234,3 +234,47 @@ exports.deleteExpense = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.parseReceipt = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No receipt image uploaded' 
+      });
+    }
+
+    try {
+      const fileBuffer = await fs.readFile(req.file.path);
+      const parsedData = await geminiService.parseReceipt(fileBuffer);
+      
+      // Clean up uploaded file after parsing
+      await fs.unlink(req.file.path).catch(() => {});
+      
+      res.json({
+        success: true,
+        lineItems: parsedData.lineItems || [],
+        merchant: parsedData.merchant,
+        date: parsedData.date,
+        subtotal: parsedData.subtotal,
+        tax: parsedData.tax,
+        total: parsedData.total
+      });
+    } catch (parseError) {
+      // Clean up uploaded file on parse error
+      await fs.unlink(req.file.path).catch(() => {});
+      
+      console.error('Receipt parsing failed:', parseError.message);
+      res.status(422).json({ 
+        success: false, 
+        message: `Receipt parsing failed: ${parseError.message}` 
+      });
+    }
+  } catch (error) {
+    // Clean up uploaded file on any error
+    if (req.file) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+    next(error);
+  }
+};

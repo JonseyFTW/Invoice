@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const authRoutes = require('./routes/auth');
-const customerRoutes = require('./routes/customers');
+const customerRoutes = require('./routes/customer');
 const invoiceRoutes = require('./routes/invoices');
 const expenseRoutes = require('./routes/expenses');
 const recurringRoutes = require('./routes/recurring');
@@ -15,6 +15,9 @@ const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
 const app = express();
+
+// Trust proxy (required for rate limiting behind nginx)
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());

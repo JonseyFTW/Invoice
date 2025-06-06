@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { Save, ArrowLeft, Plus, Trash2, Calculator } from 'lucide-react';
+import { Save, ArrowLeft, Plus, Trash2, Calculator, Camera, Upload, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,8 @@ function InvoiceForm() {
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [calculating, setCalculating] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [parsing, setParsing] = useState(false);
 
   const {
     register,
@@ -176,6 +178,138 @@ function InvoiceForm() {
     }
   };
 
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setSelectedFile(file);
+      } else {
+        toast.error('Please select an image file');
+      }
+    }
+  };
+
+  const capturePhoto = async () => {
+    try {
+      // Check if camera is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error('Camera not available on this device');
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+      
+      // Create video preview modal
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+      modal.innerHTML = `
+        <div class="bg-white p-4 rounded-lg max-w-md w-full mx-4">
+          <h3 class="text-lg font-semibold mb-4">Capture Receipt</h3>
+          <video id="camera-preview" autoplay playsinline class="w-full rounded border mb-4"></video>
+          <div class="flex space-x-2">
+            <button id="capture-btn" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Capture
+            </button>
+            <button id="cancel-btn" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+              Cancel
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const video = document.getElementById('camera-preview');
+      video.srcObject = stream;
+      
+      const captureBtn = document.getElementById('capture-btn');
+      const cancelBtn = document.getElementById('cancel-btn');
+      
+      captureBtn.onclick = () => {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        
+        canvas.toBlob((blob) => {
+          const file = new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setSelectedFile(file);
+          toast.success('Photo captured successfully!');
+          
+          // Cleanup
+          stream.getTracks().forEach(track => track.stop());
+          document.body.removeChild(modal);
+        }, 'image/jpeg', 0.9);
+      };
+      
+      cancelBtn.onclick = () => {
+        stream.getTracks().forEach(track => track.stop());
+        document.body.removeChild(modal);
+      };
+      
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      if (error.name === 'NotAllowedError') {
+        toast.error('Camera access denied. Please enable camera permissions.');
+      } else if (error.name === 'NotFoundError') {
+        toast.error('No camera found on this device.');
+      } else {
+        toast.error('Could not access camera. Please upload a file instead.');
+      }
+    }
+  };
+
+  const parseReceiptWithAI = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a receipt image first');
+      return;
+    }
+
+    try {
+      setParsing(true);
+      const formData = new FormData();
+      formData.append('receipt', selectedFile);
+
+      const response = await api.post('/expenses/parse-receipt', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success && response.data.lineItems) {
+        // Clear existing line items and add parsed ones
+        setValue('lineItems', []);
+        
+        response.data.lineItems.forEach((item, index) => {
+          append({
+            description: item.description || '',
+            quantity: parseFloat(item.quantity) || 1,
+            unitPrice: parseFloat(item.unitPrice) || 0,
+            lineTotal: parseFloat(item.lineTotal) || 0
+          });
+        });
+
+        toast.success('Receipt parsed successfully! Review the line items below.');
+        setSelectedFile(null);
+      } else {
+        toast.error('Could not parse receipt. Please try again or add items manually.');
+      }
+    } catch (error) {
+      console.error('Error parsing receipt:', error);
+      toast.error('Failed to parse receipt. Please try again.');
+    } finally {
+      setParsing(false);
+    }
+  };
+
   if (loading && isEdit) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -303,14 +437,81 @@ function InvoiceForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Line Items</h3>
-            <button
-              type="button"
-              onClick={addLineItem}
-              className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={addLineItem}
+                className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </button>
+            </div>
+          </div>
+
+          {/* AI Receipt Parsing Section */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+            <div className="flex items-center mb-3">
+              <Sparkles className="h-5 w-5 text-purple-600 mr-2" />
+              <h4 className="text-sm font-semibold text-gray-900">AI Receipt Parser</h4>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Take a photo or upload a receipt image and our AI will automatically extract line items for your invoice.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="receipt-upload"
+                />
+                <label
+                  htmlFor="receipt-upload"
+                  className="inline-flex items-center px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 cursor-pointer"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Receipt
+                </label>
+                
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="inline-flex items-center px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Take Photo
+                </button>
+              </div>
+              
+              {selectedFile && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">
+                    Selected: {selectedFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={parseReceiptWithAI}
+                    disabled={parsing}
+                    className="inline-flex items-center px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {parsing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Parsing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Parse with AI
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-4">

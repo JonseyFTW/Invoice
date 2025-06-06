@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Loader2
 } from 'lucide-react';
-import { formatCurrency, formatDate } from '../../utils';
+import { formatCurrency, formatDate } from '../../utils/frontend_utilities';
 
 // Button Component
 export const Button = forwardRef(({ 
@@ -331,6 +331,47 @@ export const LoadingSpinner = ({ size = 'md', className = '' }) => {
   );
 };
 
+// Loading Button Component
+export const LoadingButton = forwardRef(({ 
+  children, 
+  loading = false, 
+  disabled = false,
+  className = '', 
+  variant = 'primary',
+  size = 'md',
+  ...props 
+}, ref) => {
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  
+  const variants = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500'
+  };
+  
+  const sizes = {
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
+  };
+  
+  return (
+    <button
+      ref={ref}
+      disabled={disabled || loading}
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {loading && (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      )}
+      {children}
+    </button>
+  );
+});
+
 // Modal Component
 export const Modal = ({ 
   isOpen, 
@@ -368,6 +409,68 @@ export const Modal = ({
           </div>
           <div className="p-6">
             {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Confirm Dialog Component
+export const ConfirmDialog = ({ 
+  isOpen, 
+  onConfirm, 
+  onCancel, 
+  title = 'Confirm Action',
+  message = 'Are you sure you want to proceed?',
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  type = 'default' // 'default', 'danger', 'warning'
+}) => {
+  if (!isOpen) return null;
+  
+  const typeStyles = {
+    default: 'text-blue-600 bg-blue-50 hover:bg-blue-100 focus:ring-blue-500',
+    danger: 'text-red-600 bg-red-50 hover:bg-red-100 focus:ring-red-500',
+    warning: 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100 focus:ring-yellow-500'
+  };
+  
+  const iconStyles = {
+    default: <Info className="h-6 w-6 text-blue-600" />,
+    danger: <AlertTriangle className="h-6 w-6 text-red-600" />,
+    warning: <AlertCircle className="h-6 w-6 text-yellow-600" />
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl max-w-md w-full shadow-xl">
+        <div className="p-6">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              {iconStyles[type]}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {title}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {message}
+              </p>
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={onCancel}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  {cancelText}
+                </button>
+                <button
+                  onClick={onConfirm}
+                  className={`px-4 py-2 font-medium rounded-lg focus:outline-none focus:ring-2 ${typeStyles[type]}`}
+                >
+                  {confirmText}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

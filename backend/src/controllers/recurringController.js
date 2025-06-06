@@ -222,4 +222,5 @@ async function generateInvoiceFromTemplate(template) {
   });
 }
 
-module.exports = { generateInvoiceFromTemplate };
+// Don't override the exports - they were already set with exports.functionName above
+// module.exports = { generateInvoiceFromTemplate };

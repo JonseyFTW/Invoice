@@ -54,5 +54,6 @@ router.get('/:id', expenseController.getExpense);
 router.post('/', upload.single('receipt'), expenseValidation, expenseController.createExpense);
 router.put('/:id', upload.single('receipt'), expenseValidation, expenseController.updateExpense);
 router.delete('/:id', expenseController.deleteExpense);
+router.post('/parse-receipt', upload.single('receipt'), expenseController.parseReceipt);
 
 module.exports = router;

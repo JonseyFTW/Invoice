@@ -5,9 +5,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json ./
 
-# Clean npm cache and install dependencies
-RUN npm cache clean --force && \
-    npm install --production --no-optional
+# Install dependencies with verbose logging
+RUN npm install --production --verbose
 
 # Install puppeteer dependencies
 RUN apk add --no-cache \
