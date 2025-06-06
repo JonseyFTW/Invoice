@@ -41,7 +41,8 @@
     "jspdf": "^2.5.1",
     "react-virtualized": "^9.22.5",
     "react-window": "^1.8.8",
-    "react-spring": "^9.7.3"
+    "react-spring": "^9.7.3",
+    "serve": "^14.2.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.42",
@@ -72,6 +73,8 @@
     "analyze": "npm run build && npx serve -s build",
     "analyze:bundle": "npm run build && npx react-scripts build && npx source-map-explorer 'build/static/js/*.js'",
     "preview": "npm run build && npx serve -s build -l 3000",
+    "railway:build": "npm ci && npm run build",
+    "railway:start": "serve -s build -l $PORT",
     "type-check": "tsc --noEmit",
     "docker:build": "docker build -t invoice-frontend .",
     "docker:run": "docker run -p 3000:80 invoice-frontend",
