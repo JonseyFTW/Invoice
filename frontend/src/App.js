@@ -10,6 +10,7 @@ import CustomerForm from './pages/CustomerForm';
 import Invoices from './pages/Invoices';
 import InvoiceForm from './pages/InvoiceForm';
 import InvoiceDetail from './pages/InvoiceDetail';
+import RecurringTemplates from './pages/RecurringTemplates';
 import Expenses from './pages/Expenses';
 import Reports from './pages/Reports';
 import './App.css';
@@ -43,6 +44,7 @@ function AppRoutes() {
           <Route path="/invoices/new" element={<InvoiceForm />} />
           <Route path="/invoices/:id" element={<InvoiceDetail />} />
           <Route path="/invoices/:id/edit" element={<InvoiceForm />} />
+          <Route path="/recurring" element={<RecurringTemplates />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/login" element={<Navigate to="/" />} />

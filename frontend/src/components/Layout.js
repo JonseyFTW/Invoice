@@ -6,6 +6,7 @@ const navigation = [
   { name: 'Dashboard', href: '/' },
   { name: 'Customers', href: '/customers' },
   { name: 'Invoices', href: '/invoices' },
+  { name: 'Recurring', href: '/recurring' },
   { name: 'Expenses', href: '/expenses' },
   { name: 'Reports', href: '/reports' },
 ];
