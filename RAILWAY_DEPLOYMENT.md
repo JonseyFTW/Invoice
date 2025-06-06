@@ -35,12 +35,11 @@ The application consists of:
 ## Step 3: Deploy Backend Service
 
 1. Click "Add Service" → "GitHub Repo" → Select your repository
-2. Set the following in Railway:
-
-### Build Settings:
-- **Root Directory**: `backend`
-- **Build Command**: `npm ci --only=production`
-- **Start Command**: `npm run railway:start`
+2. **IMPORTANT**: In the service settings, go to "Settings" → "Source" and set:
+   - **Root Directory**: `backend`
+3. Set the following build settings:
+   - **Build Command**: `npm ci --only=production`  
+   - **Start Command**: `npm run railway:start`
 
 ### Environment Variables:
 ```
@@ -71,12 +70,11 @@ FRONTEND_URL=${{Frontend.RAILWAY_STATIC_URL}}
 ## Step 4: Deploy Frontend Service
 
 1. Click "Add Service" → "GitHub Repo" → Select your repository (create separate service)
-2. Set the following in Railway:
-
-### Build Settings:
-- **Root Directory**: `frontend`
-- **Build Command**: `npm ci && npm run build`
-- **Start Command**: `serve -s build -l $PORT`
+2. **IMPORTANT**: In the service settings, go to "Settings" → "Source" and set:
+   - **Root Directory**: `frontend`
+3. Set the following build settings:
+   - **Build Command**: `npm ci && npm run build`
+   - **Start Command**: `serve -s build -l $PORT`
 
 ### Environment Variables:
 ```
@@ -160,11 +158,23 @@ Ensure services start in the correct order:
 ## Troubleshooting
 
 ### Common Issues:
-1. **Build Failures**: Check build logs and ensure all dependencies are in package.json
-2. **Database Connection**: Verify environment variables match Railway's provided values
-3. **CORS Issues**: Ensure FRONTEND_URL is set correctly in backend
-4. **Email Issues**: Verify Gmail credentials and app passwords
-5. **AI Parsing**: Check Gemini API key validity
+
+1. **Nixpacks Build Failed**: 
+   - **Error**: "Nixpacks was unable to generate a build plan for this app"
+   - **Solution**: Each service must point to its subdirectory. In Railway:
+     - Go to service "Settings" → "Source" 
+     - Set **Root Directory** to `backend` or `frontend`
+     - This tells Nixpacks to look in the subdirectory where package.json exists
+
+2. **Build Failures**: Check build logs and ensure all dependencies are in package.json
+
+3. **Database Connection**: Verify environment variables match Railway's provided values
+
+4. **CORS Issues**: Ensure FRONTEND_URL is set correctly in backend
+
+5. **Email Issues**: Verify Gmail credentials and app passwords
+
+6. **AI Parsing**: Check Gemini API key validity
 
 ### Logs:
 - Access logs via Railway dashboard

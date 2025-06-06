@@ -1,0 +1,47 @@
+{
+  "name": "invoice-management-system",
+  "version": "1.0.0",
+  "description": "Full-stack invoice management system with React frontend and Node.js backend",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install", 
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm run railway:start",
+    "railway:install": "npm run install:all",
+    "railway:build": "npm run build:backend && npm run build:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/invoice-management.git"
+  },
+  "keywords": [
+    "invoice",
+    "billing", 
+    "business",
+    "accounting",
+    "react",
+    "nodejs",
+    "postgresql",
+    "redis"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT"
+}
