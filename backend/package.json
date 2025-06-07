@@ -15,7 +15,7 @@
     "lint": "eslint . --ext .js",
     "lint:fix": "eslint . --ext .js --fix",
     "seed": "node scripts/seedData.js",
-    "build": "npm ci --only=production",
+    "build": "echo 'No build step required for backend'",
     "railway:migrate": "npm run migrate",
     "railway:start": "npm run railway:migrate && npm start",
     "docker:build": "docker build -t invoice-backend .",
