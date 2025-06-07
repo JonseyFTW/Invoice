@@ -1,5 +1,8 @@
 providers = ["node"]
 
+[phases.build]
+cmd = "echo 'No build step needed'"
+
 [start]
 cmd = "npm start"
 
