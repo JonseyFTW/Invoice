@@ -1,5 +1,9 @@
 providers = ["node"]
 
+[variables]
+NODE_VERSION = "20"
+NODE_ENV = "production"
+
 [phases.install]
 cmd = "npm ci --no-audit --no-fund"
 
@@ -8,6 +12,3 @@ cmd = "npm run build"
 
 [start]
 cmd = "npx serve -s build -l $PORT"
-
-[variables]
-NODE_ENV = "production"
