@@ -11,7 +11,8 @@ import {
   FileText,
   MoreVertical,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Eye
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -146,6 +147,13 @@ function Customers() {
             </button>
             <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
               <Link
+                to={`/customers/${customer.id}`}
+                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </Link>
+              <Link
                 to={`/customers/${customer.id}/edit`}
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
@@ -243,14 +251,23 @@ function Customers() {
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-2">
                     <Link
+                      to={`/customers/${customer.id}`}
+                      className="text-green-600 hover:text-green-900"
+                      title="View customer details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                    <Link
                       to={`/invoices/new?customerId=${customer.id}`}
                       className="text-blue-600 hover:text-blue-900"
+                      title="Create new invoice"
                     >
                       <FileText className="h-4 w-4" />
                     </Link>
                     <Link
                       to={`/customers/${customer.id}/edit`}
                       className="text-gray-600 hover:text-gray-900"
+                      title="Edit customer"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Link>

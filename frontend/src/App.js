@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import CustomerForm from './pages/CustomerForm';
+import CustomerDetail from './pages/CustomerDetail';
 import Invoices from './pages/Invoices';
 import InvoiceForm from './pages/InvoiceForm';
 import InvoiceDetail from './pages/InvoiceDetail';
@@ -41,6 +42,7 @@ function AppRoutes() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/new" element={<CustomerForm />} />
+          <Route path="/customers/:id" element={<CustomerDetail />} />
           <Route path="/customers/:id/edit" element={<CustomerForm />} />
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/invoices/new" element={<InvoiceForm />} />
