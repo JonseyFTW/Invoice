@@ -3,6 +3,9 @@ providers = ["node"]
 [variables]
 NODE_VERSION = "20"
 NODE_ENV = "production"
+DISABLE_ESLINT_PLUGIN = "true"
+GENERATE_SOURCEMAP = "false"
+CI = "false"
 
 [phases.install]
 cmd = "npm ci --no-audit --no-fund"

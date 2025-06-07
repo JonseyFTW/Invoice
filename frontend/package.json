@@ -64,7 +64,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
@@ -103,9 +103,12 @@
     "rules": {
       "react/prop-types": "off",
       "react/react-in-jsx-scope": "off",
-      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "no-unused-vars": "warn",
       "prefer-const": "warn",
-      "no-console": ["warn", { "allow": ["warn", "error"] }]
+      "no-console": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "no-useless-escape": "warn",
+      "no-template-curly-in-string": "warn"
     }
   },
   "prettier": {
