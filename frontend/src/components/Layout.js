@@ -39,6 +39,11 @@ function Layout({ children }) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200">
+            <img
+              className="h-10 w-auto mr-3"
+              src="/logo.png"
+              alt="Company Logo"
+            />
             <span className="text-xl font-bold text-gray-900">Invoice App</span>
           </div>
           
