@@ -1,15 +1,6 @@
 FROM node:18-alpine
 
-WORKDIR /app
-
-# Copy package files
-COPY package.json ./
-
-# Clean npm cache and install dependencies
-RUN npm cache clean --force && \
-    npm install --production --no-optional
-
-# Install puppeteer dependencies
+# Install system dependencies first (better caching)
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -19,22 +10,29 @@ RUN apk add --no-cache \
     ca-certificates \
     ttf-freefont
 
-# Tell Puppeteer to skip installing Chromium. We'll be using the installed package.
+# Set Puppeteer environment variables
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    NODE_ENV=production
 
-# Copy source code
+WORKDIR /app
+
+# Copy package files only for better caching
+COPY package*.json ./
+
+# Use npm ci for faster, more reliable installs
+RUN npm ci --only=production --no-audit --no-fund && \
+    npm cache clean --force
+
+# Copy application code
 COPY . .
 
-# Create uploads and logs directories
-RUN mkdir -p uploads/receipts uploads/invoice_pdfs logs
+# Create directories and user in one RUN command
+RUN mkdir -p uploads/receipts uploads/invoice_pdfs logs && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-
-# Change ownership of the app directory
-RUN chown -R nodejs:nodejs /app
 USER nodejs
 
 EXPOSE 5000
