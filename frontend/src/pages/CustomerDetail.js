@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Edit, Plus, X, Upload, Camera, FileText, 
   MapPin, Phone, Mail, Calendar, Tag, AlertCircle,
-  Trash2, Eye, Download
+  Trash2, Eye, Download, User
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
