@@ -19,6 +19,8 @@ const sequelize = new Sequelize({
 // Import models
 const User = require('./User')(sequelize);
 const Customer = require('./Customer')(sequelize);
+const CustomerPhoto = require('./CustomerPhoto')(sequelize);
+const CustomerNote = require('./CustomerNote')(sequelize);
 const Invoice = require('./Invoice')(sequelize);
 const InvoiceLineItem = require('./InvoiceLineItem')(sequelize);
 const Expense = require('./Expense')(sequelize);
@@ -45,10 +47,20 @@ RecurringTemplate.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer'
 RecurringTemplate.hasMany(Invoice, { foreignKey: 'recurringTemplateId', as: 'generatedInvoices' });
 Invoice.belongsTo(RecurringTemplate, { foreignKey: 'recurringTemplateId', as: 'recurringTemplate' });
 
+// Customer - CustomerPhoto (One to Many)
+Customer.hasMany(CustomerPhoto, { foreignKey: 'customerId', as: 'photos', onDelete: 'CASCADE' });
+CustomerPhoto.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
+// Customer - CustomerNote (One to Many)
+Customer.hasMany(CustomerNote, { foreignKey: 'customerId', as: 'notes', onDelete: 'CASCADE' });
+CustomerNote.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
 module.exports = {
   sequelize,
   User,
   Customer,
+  CustomerPhoto,
+  CustomerNote,
   Invoice,
   InvoiceLineItem,
   Expense,

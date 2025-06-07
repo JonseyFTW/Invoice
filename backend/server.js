@@ -13,6 +13,7 @@ function createUploadDirectories() {
   const directories = [
     path.join(process.cwd(), 'uploads', 'receipts'),
     path.join(process.cwd(), 'uploads', 'invoice_pdfs'),
+    path.join(process.cwd(), 'uploads', 'customer_photos'),
     path.join(process.cwd(), 'logs')
   ];
   
