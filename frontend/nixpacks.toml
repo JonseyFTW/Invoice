@@ -1,5 +1,4 @@
-[providers]
-node = "18"
+providers = ["node"]
 
 [phases.install]
 cmd = "npm ci --no-audit --no-fund"
