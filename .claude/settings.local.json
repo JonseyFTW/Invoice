@@ -16,7 +16,9 @@
       "Bash(docker exec:*)",
       "Bash(docker-compose restart:*)",
       "Bash(mv:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
     ],
     "deny": []
   }
