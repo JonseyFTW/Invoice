@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { formatCurrency, formatDate } from '../utils/frontend_utilities';
+import logo from '../assets/logo.png';
 
 function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -113,8 +114,11 @@ function Dashboard() {
         <div className="flex items-center">
           <img
             className="h-12 w-auto mr-4"
-            src="/logo.png"
+            src={logo}
             alt="Company Logo"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
           />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>

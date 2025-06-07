@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import logo from '../assets/logo.png';
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -42,8 +43,11 @@ function Login() {
         <div className="text-center">
           <img
             className="mx-auto h-20 w-auto mb-4"
-            src="/logo.png"
+            src={logo}
             alt="Company Logo"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
           />
           <h2 className="text-3xl font-extrabold text-gray-900">
             Sign in to your account
