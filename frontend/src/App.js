@@ -31,6 +31,8 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   const { user } = useAuth();
+  
+  console.log('AppRoutes - Current user:', user);
 
   if (user) {
     return (
