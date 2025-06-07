@@ -3,8 +3,26 @@ const app = require('./src/app');
 const { sequelize, User, Customer } = require('./src/models');
 const logger = require('./src/utils/logger');
 const cronService = require('./src/services/cronService');
+const fs = require('fs');
+const path = require('path');
 
 const PORT = process.env.PORT || 5000;
+
+// Ensure upload directories exist on startup
+function createUploadDirectories() {
+  const directories = [
+    path.join(process.cwd(), 'uploads', 'receipts'),
+    path.join(process.cwd(), 'uploads', 'invoice_pdfs'),
+    path.join(process.cwd(), 'logs')
+  ];
+  
+  directories.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      logger.info(`Created directory: ${dir}`);
+    }
+  });
+}
 
 async function createInitialData() {
   try {
@@ -49,6 +67,9 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     logger.info('Database connected successfully');
+    
+    // Create upload directories
+    createUploadDirectories();
     
     // Sync database (always sync in development/docker environment)
     await sequelize.sync({ alter: true });
