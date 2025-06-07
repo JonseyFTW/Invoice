@@ -1,0 +1,14 @@
+[providers]
+node = "18"
+
+[phases.install]
+cmd = "npm ci --no-audit --no-fund"
+
+[phases.build]
+cmd = "npm run build"
+
+[start]
+cmd = "npx serve -s build -l $PORT"
+
+[variables]
+NODE_ENV = "production"
