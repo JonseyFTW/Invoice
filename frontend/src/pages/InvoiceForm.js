@@ -11,6 +11,7 @@ function InvoiceForm() {
   const isEdit = !!id;
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
+  const [properties, setProperties] = useState([]);
   const [calculating, setCalculating] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [parsing, setParsing] = useState(false);
@@ -25,6 +26,7 @@ function InvoiceForm() {
   } = useForm({
     defaultValues: {
       customerId: '',
+      propertyId: '',
       invoiceDate: new Date().toISOString().split('T')[0],
       dueDate: '',
       taxRate: 8.25,
@@ -47,6 +49,7 @@ function InvoiceForm() {
 
   const watchedLineItems = watch('lineItems');
   const watchedTaxRate = watch('taxRate');
+  const watchedCustomerId = watch('customerId');
 
   useEffect(() => {
     fetchCustomers();
@@ -65,12 +68,32 @@ function InvoiceForm() {
     calculateTotals();
   }, [watchedLineItems, watchedTaxRate]);
 
+  // Fetch properties when customer changes
+  useEffect(() => {
+    if (watchedCustomerId) {
+      fetchCustomerProperties(watchedCustomerId);
+    } else {
+      setProperties([]);
+      setValue('propertyId', '');
+    }
+  }, [watchedCustomerId]);
+
   const fetchCustomers = async () => {
     try {
       const response = await api.get('/customers?limit=100');
       setCustomers(response.data.customers);
     } catch (error) {
       console.error('Error fetching customers:', error);
+    }
+  };
+
+  const fetchCustomerProperties = async (customerId) => {
+    try {
+      const response = await api.get(`/customers/${customerId}/properties`);
+      setProperties(response.data.properties);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      setProperties([]);
     }
   };
 
@@ -81,10 +104,16 @@ function InvoiceForm() {
       const invoice = response.data.invoice;
       
       setValue('customerId', invoice.customerId);
+      setValue('propertyId', invoice.propertyId || '');
       setValue('invoiceDate', invoice.invoiceDate);
       setValue('dueDate', invoice.dueDate);
       setValue('taxRate', parseFloat(invoice.taxRate));
       setValue('notes', invoice.notes || '');
+      
+      // Fetch properties for the selected customer
+      if (invoice.customerId) {
+        fetchCustomerProperties(invoice.customerId);
+      }
       setValue('lineItems', invoice.lineItems.map(item => ({
         description: item.description,
         quantity: parseFloat(item.quantity),
@@ -345,7 +374,7 @@ function InvoiceForm() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Invoice Information</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Customer */}
             <div>
               <label htmlFor="customerId" className="block text-sm font-medium text-gray-700 mb-2">
@@ -367,6 +396,32 @@ function InvoiceForm() {
               </select>
               {errors.customerId && (
                 <p className="mt-1 text-sm text-red-600">{errors.customerId.message}</p>
+              )}
+            </div>
+
+            {/* Property */}
+            <div>
+              <label htmlFor="propertyId" className="block text-sm font-medium text-gray-700 mb-2">
+                Property (Optional)
+              </label>
+              <select
+                id="propertyId"
+                {...register('propertyId')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={!watchedCustomerId || properties.length === 0}
+              >
+                <option value="">Select a property (optional)</option>
+                {properties.map(property => (
+                  <option key={property.id} value={property.id}>
+                    {property.name} - {property.address}
+                  </option>
+                ))}
+              </select>
+              {!watchedCustomerId && (
+                <p className="mt-1 text-sm text-gray-500">Select a customer first to view their properties</p>
+              )}
+              {watchedCustomerId && properties.length === 0 && (
+                <p className="mt-1 text-sm text-gray-500">No properties found for this customer</p>
               )}
             </div>
 

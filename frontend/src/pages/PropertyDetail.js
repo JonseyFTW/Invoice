@@ -3,30 +3,51 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Edit, Plus, X, Upload, Camera, FileText, 
   MapPin, Phone, Mail, Calendar, Tag, AlertCircle,
-  Trash2, Eye, Download, User, Home
+  Trash2, Eye, Download, Home, Clock, DollarSign,
+  Users, Wrench, Star, CheckCircle
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { openAddressInMaps } from '../utils/frontend_utilities';
 
-const PHOTO_CATEGORIES = [
-  { value: 'house_exterior', label: 'House Exterior', color: 'bg-blue-100 text-blue-800' },
-  { value: 'house_interior', label: 'House Interior', color: 'bg-green-100 text-green-800' },
+const PROPERTY_PHOTO_CATEGORIES = [
+  { value: 'exterior_front', label: 'Exterior Front', color: 'bg-blue-100 text-blue-800' },
+  { value: 'exterior_back', label: 'Exterior Back', color: 'bg-blue-100 text-blue-800' },
+  { value: 'exterior_side', label: 'Exterior Side', color: 'bg-blue-100 text-blue-800' },
+  { value: 'interior_room', label: 'Interior Room', color: 'bg-green-100 text-green-800' },
   { value: 'before_work', label: 'Before Work', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'after_work', label: 'After Work', color: 'bg-purple-100 text-purple-800' },
+  { value: 'during_work', label: 'During Work', color: 'bg-orange-100 text-orange-800' },
   { value: 'damage', label: 'Damage', color: 'bg-red-100 text-red-800' },
   { value: 'materials', label: 'Materials', color: 'bg-gray-100 text-gray-800' },
-  { value: 'other', label: 'Other', color: 'bg-indigo-100 text-indigo-800' }
+  { value: 'equipment', label: 'Equipment', color: 'bg-indigo-100 text-indigo-800' },
+  { value: 'access_point', label: 'Access Point', color: 'bg-teal-100 text-teal-800' },
+  { value: 'other', label: 'Other', color: 'bg-gray-100 text-gray-800' }
 ];
 
-const NOTE_CATEGORIES = [
+const PROPERTY_NOTE_CATEGORIES = [
   { value: 'paint_codes', label: 'Paint Codes', color: 'bg-pink-100 text-pink-800' },
   { value: 'materials', label: 'Materials', color: 'bg-blue-100 text-blue-800' },
-  { value: 'preferences', label: 'Preferences', color: 'bg-green-100 text-green-800' },
+  { value: 'measurements', label: 'Measurements', color: 'bg-green-100 text-green-800' },
   { value: 'access_info', label: 'Access Info', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'special_instructions', label: 'Special Instructions', color: 'bg-red-100 text-red-800' },
-  { value: 'job_history', label: 'Job History', color: 'bg-purple-100 text-purple-800' },
+  { value: 'damage_notes', label: 'Damage Notes', color: 'bg-orange-100 text-orange-800' },
+  { value: 'maintenance_history', label: 'Maintenance History', color: 'bg-purple-100 text-purple-800' },
+  { value: 'client_preferences', label: 'Client Preferences', color: 'bg-indigo-100 text-indigo-800' },
+  { value: 'safety_concerns', label: 'Safety Concerns', color: 'bg-red-100 text-red-800' },
   { value: 'other', label: 'Other', color: 'bg-gray-100 text-gray-800' }
+];
+
+const SERVICE_TYPES = [
+  { value: 'painting', label: 'Painting', icon: '🎨' },
+  { value: 'repair', label: 'Repair', icon: '🔧' },
+  { value: 'maintenance', label: 'Maintenance', icon: '⚙️' },
+  { value: 'inspection', label: 'Inspection', icon: '🔍' },
+  { value: 'estimate', label: 'Estimate', icon: '📋' },
+  { value: 'consultation', label: 'Consultation', icon: '💬' },
+  { value: 'cleanup', label: 'Cleanup', icon: '🧹' },
+  { value: 'preparation', label: 'Preparation', icon: '📐' },
+  { value: 'other', label: 'Other', icon: '📝' }
 ];
 
 const PRIORITY_COLORS = {
@@ -35,16 +56,12 @@ const PRIORITY_COLORS = {
   high: 'bg-red-100 text-red-800'
 };
 
-function CustomerDetail() {
+function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [customer, setCustomer] = useState(null);
+  const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('details');
-  
-  // Properties state
-  const [properties, setProperties] = useState([]);
-  const [loadingProperties, setLoadingProperties] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   
   // Photo state
   const [photos, setPhotos] = useState([]);
@@ -53,6 +70,8 @@ function CustomerDetail() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoCategory, setPhotoCategory] = useState('other');
   const [photoDescription, setPhotoDescription] = useState('');
+  const [photoRoom, setPhotoRoom] = useState('');
+  const [photoFloor, setPhotoFloor] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   
   // Notes state
@@ -63,39 +82,33 @@ function CustomerDetail() {
   const [noteContent, setNoteContent] = useState('');
   const [noteCategory, setNoteCategory] = useState('other');
   const [notePriority, setNotePriority] = useState('medium');
+  const [noteRoom, setNoteRoom] = useState('');
+  const [noteFloor, setNoteFloor] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
+  // Service history state
+  const [serviceHistory, setServiceHistory] = useState([]);
+
   useEffect(() => {
-    fetchCustomer();
-    fetchProperties();
+    fetchProperty();
   }, [id]);
 
-  const fetchCustomer = async () => {
+  const fetchProperty = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/customers/${id}`);
-      setCustomer(response.data.customer);
-      setPhotos(response.data.customer.photos || []);
-      setNotes(response.data.customer.notes || []);
+      const response = await api.get(`/properties/${id}`);
+      const propertyData = response.data.property;
+      
+      setProperty(propertyData);
+      setPhotos(propertyData.photos || []);
+      setNotes(propertyData.notes || []);
+      setServiceHistory(propertyData.serviceHistory || []);
     } catch (error) {
-      console.error('Error fetching customer:', error);
-      toast.error('Failed to load customer data');
+      console.error('Error fetching property:', error);
+      toast.error('Failed to load property data');
       navigate('/customers');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchProperties = async () => {
-    try {
-      setLoadingProperties(true);
-      const response = await api.get(`/properties/customer/${id}`);
-      setProperties(response.data.properties);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-      toast.error('Failed to load properties');
-    } finally {
-      setLoadingProperties(false);
     }
   };
 
@@ -111,9 +124,11 @@ function CustomerDetail() {
     formData.append('photo', photoFile);
     formData.append('category', photoCategory);
     formData.append('description', photoDescription);
+    formData.append('room', photoRoom);
+    formData.append('floor', photoFloor);
 
     try {
-      const response = await api.post(`/customers/${id}/photos`, formData, {
+      const response = await api.post(`/properties/${id}/photos`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
@@ -122,6 +137,8 @@ function CustomerDetail() {
       setPhotoFile(null);
       setPhotoDescription('');
       setPhotoCategory('other');
+      setPhotoRoom('');
+      setPhotoFloor('');
       toast.success('Photo uploaded successfully');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -135,7 +152,7 @@ function CustomerDetail() {
     if (!window.confirm('Are you sure you want to delete this photo?')) return;
 
     try {
-      await api.delete(`/customers/photos/${photoId}`);
+      await api.delete(`/properties/photos/${photoId}`);
       setPhotos(prev => prev.filter(photo => photo.id !== photoId));
       toast.success('Photo deleted successfully');
     } catch (error) {
@@ -156,19 +173,21 @@ function CustomerDetail() {
       title: noteTitle,
       content: noteContent,
       category: noteCategory,
-      priority: notePriority
+      priority: notePriority,
+      room: noteRoom || null,
+      floor: noteFloor ? parseInt(noteFloor) : null
     };
 
     try {
       let response;
       if (editingNote) {
-        response = await api.put(`/customers/notes/${editingNote.id}`, noteData);
+        response = await api.put(`/properties/notes/${editingNote.id}`, noteData);
         setNotes(prev => prev.map(note => 
           note.id === editingNote.id ? response.data.note : note
         ));
         toast.success('Note updated successfully');
       } else {
-        response = await api.post(`/customers/${id}/notes`, noteData);
+        response = await api.post(`/properties/${id}/notes`, noteData);
         setNotes(prev => [response.data.note, ...prev]);
         toast.success('Note created successfully');
       }
@@ -187,7 +206,7 @@ function CustomerDetail() {
     if (!window.confirm('Are you sure you want to delete this note?')) return;
 
     try {
-      await api.delete(`/customers/notes/${noteId}`);
+      await api.delete(`/properties/notes/${noteId}`);
       setNotes(prev => prev.filter(note => note.id !== noteId));
       toast.success('Note deleted successfully');
     } catch (error) {
@@ -202,6 +221,8 @@ function CustomerDetail() {
     setNoteContent(note.content);
     setNoteCategory(note.category);
     setNotePriority(note.priority);
+    setNoteRoom(note.room || '');
+    setNoteFloor(note.floor || '');
     setShowNoteModal(true);
   };
 
@@ -211,10 +232,16 @@ function CustomerDetail() {
     setNoteContent('');
     setNoteCategory('other');
     setNotePriority('medium');
+    setNoteRoom('');
+    setNoteFloor('');
   };
 
   const getCategoryInfo = (categories, value) => {
     return categories.find(cat => cat.value === value) || categories.find(cat => cat.value === 'other');
+  };
+
+  const getServiceTypeInfo = (value) => {
+    return SERVICE_TYPES.find(type => type.value === value) || SERVICE_TYPES.find(type => type.value === 'other');
   };
 
   if (loading) {
@@ -225,11 +252,11 @@ function CustomerDetail() {
     );
   }
 
-  if (!customer) {
+  if (!property) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Customer not found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Property not found</h2>
           <button
             onClick={() => navigate('/customers')}
             className="text-blue-600 hover:text-blue-700"
@@ -241,6 +268,12 @@ function CustomerDetail() {
     );
   }
 
+  const fullAddress = [
+    property.address,
+    property.city && property.state ? `${property.city}, ${property.state}` : null,
+    property.zipCode
+  ].filter(Boolean).join('\n');
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -248,22 +281,24 @@ function CustomerDetail() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigate('/customers')}
+              onClick={() => navigate(`/customers/${property.customer?.id || ''}`)}
               className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{customer.name}</h1>
-              <p className="text-gray-600">Customer Details</p>
+              <h1 className="text-3xl font-bold text-gray-900">{property.name}</h1>
+              <p className="text-gray-600">
+                {property.customer?.name && `Property of ${property.customer.name}`}
+              </p>
             </div>
           </div>
           <button
-            onClick={() => navigate(`/customers/${id}/edit`)}
+            onClick={() => navigate(`/properties/${id}/edit`)}
             className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
             <Edit className="h-4 w-4" />
-            <span>Edit Customer</span>
+            <span>Edit Property</span>
           </button>
         </div>
       </div>
@@ -272,10 +307,10 @@ function CustomerDetail() {
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           {[
-            { id: 'details', label: 'Details', icon: User },
-            { id: 'properties', label: 'Properties', icon: Home },
+            { id: 'overview', label: 'Overview', icon: Home },
             { id: 'photos', label: 'Photos', icon: Camera },
-            { id: 'notes', label: 'Notes', icon: FileText }
+            { id: 'notes', label: 'Notes', icon: FileText },
+            { id: 'history', label: 'Service History', icon: Clock }
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -290,11 +325,6 @@ function CustomerDetail() {
               >
                 <Icon className="h-4 w-4" />
                 <span>{tab.label}</span>
-                {tab.id === 'properties' && properties.length > 0 && (
-                  <span className="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full">
-                    {properties.length}
-                  </span>
-                )}
                 {tab.id === 'photos' && photos.length > 0 && (
                   <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">
                     {photos.length}
@@ -305,6 +335,11 @@ function CustomerDetail() {
                     {notes.length}
                   </span>
                 )}
+                {tab.id === 'history' && serviceHistory.length > 0 && (
+                  <span className="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full">
+                    {serviceHistory.length}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -312,50 +347,194 @@ function CustomerDetail() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'details' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Customer Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex items-center space-x-3">
-              <User className="h-5 w-5 text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-500">Name</p>
-                <p className="font-medium">{customer.name}</p>
-              </div>
-            </div>
-            
-            {customer.email && (
-              <div className="flex items-center space-x-3">
-                <Mail className="h-5 w-5 text-gray-400" />
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Basic Information */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Property Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium">{customer.email}</p>
+                  <p className="text-sm text-gray-500">Property Type</p>
+                  <p className="font-medium capitalize">{property.propertyType}</p>
                 </div>
-              </div>
-            )}
-            
-            {customer.phone && (
-              <div className="flex items-center space-x-3">
-                <Phone className="h-5 w-5 text-gray-400" />
+                
                 <div>
-                  <p className="text-sm text-gray-500">Phone</p>
-                  <p className="font-medium">{customer.phone}</p>
-                </div>
-              </div>
-            )}
-            
-            {customer.billingAddress && (
-              <div className="flex items-start space-x-3 md:col-span-2">
-                <MapPin className="h-5 w-5 text-gray-400 mt-1" />
-                <div>
-                  <p className="text-sm text-gray-500">Billing Address</p>
+                  <p className="text-sm text-gray-500">Address</p>
                   <button
-                    onClick={() => openAddressInMaps(customer.billingAddress)}
-                    className="font-medium whitespace-pre-line text-left hover:text-blue-600 hover:underline transition-colors"
+                    onClick={() => openAddressInMaps(fullAddress)}
+                    className="font-medium hover:text-blue-600 hover:underline transition-colors text-left"
                     title="Open in Maps"
                   >
-                    {customer.billingAddress}
+                    {fullAddress}
                   </button>
+                </div>
+
+                {property.squareFootage && (
+                  <div>
+                    <p className="text-sm text-gray-500">Square Footage</p>
+                    <p className="font-medium">{property.squareFootage.toLocaleString()} sq ft</p>
+                  </div>
+                )}
+
+                {property.yearBuilt && (
+                  <div>
+                    <p className="text-sm text-gray-500">Year Built</p>
+                    <p className="font-medium">{property.yearBuilt}</p>
+                  </div>
+                )}
+
+                {property.bedrooms && (
+                  <div>
+                    <p className="text-sm text-gray-500">Bedrooms</p>
+                    <p className="font-medium">{property.bedrooms}</p>
+                  </div>
+                )}
+
+                {property.bathrooms && (
+                  <div>
+                    <p className="text-sm text-gray-500">Bathrooms</p>
+                    <p className="font-medium">{property.bathrooms}</p>
+                  </div>
+                )}
+
+                {property.floors && (
+                  <div>
+                    <p className="text-sm text-gray-500">Floors</p>
+                    <p className="font-medium">{property.floors}</p>
+                  </div>
+                )}
+              </div>
+
+              {property.description && (
+                <div className="mt-6">
+                  <p className="text-sm text-gray-500 mb-2">Description</p>
+                  <p className="text-gray-700">{property.description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Access Information */}
+            {(property.gateCode || property.keyLocation || property.contactOnSite || property.contactPhone || property.accessNotes) && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Access Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {property.gateCode && (
+                    <div>
+                      <p className="text-sm text-gray-500">Gate Code</p>
+                      <p className="font-medium">{property.gateCode}</p>
+                    </div>
+                  )}
+
+                  {property.keyLocation && (
+                    <div>
+                      <p className="text-sm text-gray-500">Key Location</p>
+                      <p className="font-medium">{property.keyLocation}</p>
+                    </div>
+                  )}
+
+                  {property.contactOnSite && (
+                    <div>
+                      <p className="text-sm text-gray-500">On-Site Contact</p>
+                      <p className="font-medium">{property.contactOnSite}</p>
+                    </div>
+                  )}
+
+                  {property.contactPhone && (
+                    <div>
+                      <p className="text-sm text-gray-500">Contact Phone</p>
+                      <p className="font-medium">{property.contactPhone}</p>
+                    </div>
+                  )}
+                </div>
+
+                {property.accessNotes && (
+                  <div className="mt-6">
+                    <p className="text-sm text-gray-500 mb-2">Access Notes</p>
+                    <p className="text-gray-700 whitespace-pre-line">{property.accessNotes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Special Instructions */}
+            {property.specialInstructions && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Special Instructions</h2>
+                <p className="text-gray-700 whitespace-pre-line">{property.specialInstructions}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Photos</span>
+                  <span className="font-medium">{photos.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Notes</span>
+                  <span className="font-medium">{notes.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Service Records</span>
+                  <span className="font-medium">{serviceHistory.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Invoices</span>
+                  <span className="font-medium">{property.invoices?.length || 0}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Photos Preview */}
+            {photos.length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Photos</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {photos.slice(0, 4).map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer"
+                      onClick={() => setSelectedPhoto(photo)}
+                    >
+                      <img
+                        src={`${process.env.REACT_APP_API_URL.replace('/api', '')}/uploads/property_photos/${photo.filename}`}
+                        alt={photo.description || 'Property photo'}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {photos.length > 4 && (
+                  <button
+                    onClick={() => setActiveTab('photos')}
+                    className="w-full mt-3 text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    View all {photos.length} photos
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* GPS Coordinates */}
+            {(property.latitude && property.longitude) && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">GPS Coordinates</h3>
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-sm text-gray-500">Latitude:</span>
+                    <span className="ml-2 font-mono text-sm">{property.latitude}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Longitude:</span>
+                    <span className="ml-2 font-mono text-sm">{property.longitude}</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -363,114 +542,11 @@ function CustomerDetail() {
         </div>
       )}
 
-      {activeTab === 'properties' && (
-        <div>
-          {/* Properties Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Properties</h2>
-            <button
-              onClick={() => navigate(`/customers/${id}/properties/new`)}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Property</span>
-            </button>
-          </div>
-
-          {/* Properties List */}
-          {loadingProperties ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : properties.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <Home className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No properties yet</h3>
-              <p className="text-gray-600 mb-4">Add properties for this customer to track work locations</p>
-              <button
-                onClick={() => navigate(`/customers/${id}/properties/new`)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Add First Property
-              </button>
-            </div>
-          ) : (
-            <div className="grid gap-6">
-              {properties.map((property) => (
-                <div key={property.id} className="bg-white rounded-lg shadow border border-gray-200 p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center">
-                          <Home className="h-6 w-6 text-purple-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{property.name}</h3>
-                          <p className="text-sm text-gray-500 capitalize">{property.propertyType}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-start text-sm text-gray-600">
-                          <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                          <button
-                            onClick={() => openAddressInMaps(property.address)}
-                            className="text-left hover:text-blue-600 hover:underline transition-colors"
-                            title="Open in Maps"
-                          >
-                            {property.address}
-                            {property.city && property.state && (
-                              <span className="block">{property.city}, {property.state} {property.zipCode}</span>
-                            )}
-                          </button>
-                        </div>
-                        
-                        {property.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2">{property.description}</p>
-                        )}
-                        
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
-                          {property.photos && property.photos.length > 0 && (
-                            <span className="flex items-center">
-                              <Camera className="h-3 w-3 mr-1" />
-                              {property.photos.length} photos
-                            </span>
-                          )}
-                          {property.notes && property.notes.length > 0 && (
-                            <span className="flex items-center">
-                              <FileText className="h-3 w-3 mr-1" />
-                              {property.notes.length} notes
-                            </span>
-                          )}
-                          {property.squareFootage && (
-                            <span>{property.squareFootage.toLocaleString()} sq ft</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => navigate(`/properties/${property.id}`)}
-                        className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Photos Tab - Similar to CustomerDetail but for property photos */}
       {activeTab === 'photos' && (
         <div>
-          {/* Photos Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Customer Photos</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Property Photos</h2>
             <button
               onClick={() => setShowPhotoModal(true)}
               className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -480,12 +556,11 @@ function CustomerDetail() {
             </button>
           </div>
 
-          {/* Photos Grid */}
           {photos.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No photos yet</h3>
-              <p className="text-gray-600 mb-4">Add photos of the customer's house, jobs, or materials</p>
+              <p className="text-gray-600 mb-4">Add photos to document this property</p>
               <button
                 onClick={() => setShowPhotoModal(true)}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -496,13 +571,13 @@ function CustomerDetail() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {photos.map((photo) => {
-                const categoryInfo = getCategoryInfo(PHOTO_CATEGORIES, photo.category);
+                const categoryInfo = getCategoryInfo(PROPERTY_PHOTO_CATEGORIES, photo.category);
                 return (
                   <div key={photo.id} className="bg-white rounded-lg shadow overflow-hidden group">
                     <div className="aspect-w-16 aspect-h-12 bg-gray-200 relative">
                       <img
-                        src={`${process.env.REACT_APP_API_URL.replace('/api', '')}/uploads/customer_photos/${photo.filename}`}
-                        alt={photo.description || 'Customer photo'}
+                        src={`${process.env.REACT_APP_API_URL.replace('/api', '')}/uploads/property_photos/${photo.filename}`}
+                        alt={photo.description || 'Property photo'}
                         className="w-full h-48 object-cover cursor-pointer"
                         onClick={() => setSelectedPhoto(photo)}
                       />
@@ -532,6 +607,9 @@ function CustomerDetail() {
                           {new Date(photo.uploadedAt).toLocaleDateString()}
                         </span>
                       </div>
+                      {photo.room && (
+                        <p className="text-xs text-gray-600 mb-1">Room: {photo.room}</p>
+                      )}
                       {photo.description && (
                         <p className="text-sm text-gray-600 truncate">{photo.description}</p>
                       )}
@@ -544,11 +622,11 @@ function CustomerDetail() {
         </div>
       )}
 
+      {/* Notes Tab - Similar structure but for property notes */}
       {activeTab === 'notes' && (
         <div>
-          {/* Notes Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Customer Notes</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Property Notes</h2>
             <button
               onClick={() => {
                 resetNoteForm();
@@ -561,12 +639,11 @@ function CustomerDetail() {
             </button>
           </div>
 
-          {/* Notes List */}
           {notes.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No notes yet</h3>
-              <p className="text-gray-600 mb-4">Add notes about paint codes, preferences, or job details</p>
+              <p className="text-gray-600 mb-4">Add notes to track important property information</p>
               <button
                 onClick={() => {
                   resetNoteForm();
@@ -580,7 +657,7 @@ function CustomerDetail() {
           ) : (
             <div className="space-y-4">
               {notes.map((note) => {
-                const categoryInfo = getCategoryInfo(NOTE_CATEGORIES, note.category);
+                const categoryInfo = getCategoryInfo(PROPERTY_NOTE_CATEGORIES, note.category);
                 const priorityColor = PRIORITY_COLORS[note.priority];
                 return (
                   <div key={note.id} className="bg-white rounded-lg shadow p-6">
@@ -594,6 +671,9 @@ function CustomerDetail() {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityColor}`}>
                             {note.priority.charAt(0).toUpperCase() + note.priority.slice(1)}
                           </span>
+                          {note.room && (
+                            <span className="text-xs text-gray-500">Room: {note.room}</span>
+                          )}
                         </div>
                         <p className="text-gray-600 whitespace-pre-line">{note.content}</p>
                       </div>
@@ -618,6 +698,121 @@ function CustomerDetail() {
                         <span> • Updated: {new Date(note.updatedAt).toLocaleString()}</span>
                       )}
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Service History Tab */}
+      {activeTab === 'history' && (
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Service History</h2>
+            <button
+              onClick={() => navigate(`/properties/${id}/service/new`)}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Service Record</span>
+            </button>
+          </div>
+
+          {serviceHistory.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No service history yet</h3>
+              <p className="text-gray-600 mb-4">Track all services performed at this property</p>
+              <button
+                onClick={() => navigate(`/properties/${id}/service/new`)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Add First Service Record
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {serviceHistory.map((service) => {
+                const serviceTypeInfo = getServiceTypeInfo(service.serviceType);
+                return (
+                  <div key={service.id} className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-blue-100 w-10 h-10 rounded-full flex items-center justify-center">
+                          <span className="text-lg">{serviceTypeInfo.icon}</span>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {serviceTypeInfo.label}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {new Date(service.serviceDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {service.totalCost && (
+                          <p className="text-lg font-semibold text-gray-900">
+                            ${parseFloat(service.totalCost).toFixed(2)}
+                          </p>
+                        )}
+                        {service.invoice && (
+                          <p className="text-sm text-blue-600">
+                            Invoice #{service.invoice.invoiceNumber}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-gray-700 mb-4">{service.description}</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      {service.timeSpent && (
+                        <div>
+                          <p className="text-gray-500">Time Spent</p>
+                          <p className="font-medium">{service.timeSpent} hours</p>
+                        </div>
+                      )}
+                      {service.roomsServiced && (
+                        <div>
+                          <p className="text-gray-500">Rooms</p>
+                          <p className="font-medium">{service.roomsServiced}</p>
+                        </div>
+                      )}
+                      {service.customerSatisfaction && (
+                        <div>
+                          <p className="text-gray-500">Satisfaction</p>
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${
+                                  i < service.customerSatisfaction
+                                    ? 'text-yellow-400 fill-current'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {service.followUpRequired && (
+                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <div className="flex items-center">
+                          <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
+                          <p className="text-sm text-yellow-800">
+                            Follow-up required
+                            {service.followUpDate && (
+                              <span> by {new Date(service.followUpDate).toLocaleDateString()}</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -663,12 +858,40 @@ function CustomerDetail() {
                   onChange={(e) => setPhotoCategory(e.target.value)}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {PHOTO_CATEGORIES.map((category) => (
+                  {PROPERTY_PHOTO_CATEGORIES.map((category) => (
                     <option key={category.value} value={category.value}>
                       {category.label}
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Room (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={photoRoom}
+                    onChange={(e) => setPhotoRoom(e.target.value)}
+                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Living Room"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Floor (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    value={photoFloor}
+                    onChange={(e) => setPhotoFloor(e.target.value)}
+                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="1"
+                  />
+                </div>
               </div>
               
               <div>
@@ -712,11 +935,13 @@ function CustomerDetail() {
             <div className="flex items-center justify-between p-4 border-b">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedPhoto.description || 'Customer Photo'}
+                  {selectedPhoto.description || 'Property Photo'}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {getCategoryInfo(PHOTO_CATEGORIES, selectedPhoto.category).label} • 
-                  {new Date(selectedPhoto.uploadedAt).toLocaleDateString()}
+                  {getCategoryInfo(PROPERTY_PHOTO_CATEGORIES, selectedPhoto.category).label}
+                  {selectedPhoto.room && ` • ${selectedPhoto.room}`}
+                  {selectedPhoto.floor && ` • Floor ${selectedPhoto.floor}`}
+                  • {new Date(selectedPhoto.uploadedAt).toLocaleDateString()}
                 </p>
               </div>
               <button
@@ -728,8 +953,8 @@ function CustomerDetail() {
             </div>
             <div className="p-4">
               <img
-                src={`${process.env.REACT_APP_API_URL.replace('/api', '')}/uploads/customer_photos/${selectedPhoto.filename}`}
-                alt={selectedPhoto.description || 'Customer photo'}
+                src={`${process.env.REACT_APP_API_URL.replace('/api', '')}/uploads/property_photos/${selectedPhoto.filename}`}
+                alt={selectedPhoto.description || 'Property photo'}
                 className="max-w-full max-h-96 mx-auto"
               />
             </div>
@@ -763,7 +988,7 @@ function CustomerDetail() {
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Paint Codes for Living Room"
+                  placeholder="e.g., Paint Colors for Kitchen"
                   required
                 />
               </div>
@@ -778,7 +1003,7 @@ function CustomerDetail() {
                     onChange={(e) => setNoteCategory(e.target.value)}
                     className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {NOTE_CATEGORIES.map((category) => (
+                    {PROPERTY_NOTE_CATEGORIES.map((category) => (
                       <option key={category.value} value={category.value}>
                         {category.label}
                       </option>
@@ -801,6 +1026,34 @@ function CustomerDetail() {
                   </select>
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Room (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={noteRoom}
+                    onChange={(e) => setNoteRoom(e.target.value)}
+                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Kitchen"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Floor (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    value={noteFloor}
+                    onChange={(e) => setNoteFloor(e.target.value)}
+                    className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="1"
+                  />
+                </div>
+              </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -811,7 +1064,7 @@ function CustomerDetail() {
                   onChange={(e) => setNoteContent(e.target.value)}
                   rows={6}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter detailed information about the customer..."
+                  placeholder="Enter detailed information about the property..."
                   required
                 />
               </div>
@@ -840,4 +1093,4 @@ function CustomerDetail() {
   );
 }
 
-export default CustomerDetail;
+export default PropertyDetail;

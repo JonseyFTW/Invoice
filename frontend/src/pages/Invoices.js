@@ -15,11 +15,13 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  Home,
+  MapPin
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { formatCurrency, formatDate } from '../utils/frontend_utilities';
+import { formatCurrency, formatDate, openAddressInMaps } from '../utils/frontend_utilities';
 
 function Invoices() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -196,6 +198,18 @@ function Invoices() {
             </span>
           </div>
           <p className="text-sm text-gray-600 mb-1">{invoice.customer?.name}</p>
+          {invoice.property && (
+            <div className="flex items-center text-sm text-gray-500 mb-1">
+              <Home className="h-3 w-3 mr-1" />
+              <button
+                onClick={() => openAddressInMaps(invoice.property.address)}
+                className="hover:text-blue-600 hover:underline transition-colors truncate"
+                title="Open in Maps"
+              >
+                {invoice.property.name}
+              </button>
+            </div>
+          )}
           <p className="text-sm text-gray-500">
             Due: {formatDate(invoice.dueDate)}
           </p>
@@ -287,6 +301,9 @@ function Invoices() {
                 Customer
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Property
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amount
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -312,6 +329,25 @@ function Invoices() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{invoice.customer?.name}</div>
                   <div className="text-sm text-gray-500">{invoice.customer?.email}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {invoice.property ? (
+                    <div>
+                      <div className="flex items-center text-sm font-medium text-gray-900">
+                        <Home className="h-3 w-3 mr-1" />
+                        {invoice.property.name}
+                      </div>
+                      <button
+                        onClick={() => openAddressInMaps(invoice.property.address)}
+                        className="text-xs text-gray-500 hover:text-blue-600 hover:underline transition-colors truncate block max-w-32"
+                        title="Open in Maps"
+                      >
+                        {invoice.property.address}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-400">No property</div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">

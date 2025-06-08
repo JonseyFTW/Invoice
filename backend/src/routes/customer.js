@@ -78,4 +78,7 @@ router.get('/:id/notes', customerController.getCustomerNotes);
 router.put('/notes/:noteId', noteValidation, customerController.updateCustomerNote);
 router.delete('/notes/:noteId', customerController.deleteCustomerNote);
 
+// Customer Properties Routes (for invoice selection)
+router.get('/:id/properties', customerController.getCustomerProperties);
+
 module.exports = router;

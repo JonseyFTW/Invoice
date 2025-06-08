@@ -11,10 +11,12 @@ import {
   User,
   FileText,
   Phone,
-  MapPin
+  MapPin,
+  Home
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { openAddressInMaps } from '../utils/frontend_utilities';
 
 function InvoiceDetail() {
   const { id } = useParams();
@@ -247,6 +249,58 @@ function InvoiceDetail() {
                   )}
                 </div>
               </div>
+
+              {/* Property Information */}
+              {invoice.property && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Service Location:</h3>
+                  <div className="space-y-1">
+                    <div className="flex items-center text-gray-900">
+                      <Home className="h-4 w-4 mr-2" />
+                      <span className="font-medium">{invoice.property.name}</span>
+                    </div>
+                    <div className="flex items-start text-gray-600">
+                      <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                      <button
+                        onClick={() => openAddressInMaps([
+                          invoice.property.address,
+                          invoice.property.city && invoice.property.state ? `${invoice.property.city}, ${invoice.property.state}` : null
+                        ].filter(Boolean).join('\n'))}
+                        className="text-left hover:text-blue-600 hover:underline transition-colors"
+                        title="Open in Maps"
+                      >
+                        {invoice.property.address}
+                        {invoice.property.city && invoice.property.state && (
+                          <span className="block">{invoice.property.city}, {invoice.property.state}</span>
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 capitalize">
+                      {invoice.property.propertyType} Property
+                    </p>
+                    {invoice.property.accessNotes && (
+                      <div className="mt-2 p-2 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                        <p className="text-xs text-yellow-800 font-medium">Access Notes:</p>
+                        <p className="text-xs text-yellow-700">{invoice.property.accessNotes}</p>
+                      </div>
+                    )}
+                    {invoice.property.gateCode && (
+                      <div className="mt-1">
+                        <p className="text-xs text-gray-600">
+                          <span className="font-medium">Gate Code:</span> {invoice.property.gateCode}
+                        </p>
+                      </div>
+                    )}
+                    {invoice.property.keyLocation && (
+                      <div className="mt-1">
+                        <p className="text-xs text-gray-600">
+                          <span className="font-medium">Key Location:</span> {invoice.property.keyLocation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Invoice Information:</h3>

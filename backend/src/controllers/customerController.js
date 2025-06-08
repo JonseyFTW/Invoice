@@ -1,4 +1,4 @@
-const { Customer, CustomerPhoto, CustomerNote } = require('../models');
+const { Customer, CustomerPhoto, CustomerNote, Property } = require('../models');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 const fs = require('fs').promises;
@@ -292,6 +292,30 @@ exports.deleteCustomerNote = async (req, res, next) => {
 
     await note.destroy();
     res.json({ message: 'Note deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getCustomerProperties = async (req, res, next) => {
+  try {
+    const { customerId } = req.params;
+
+    const customer = await Customer.findByPk(customerId);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    const properties = await Property.findAll({
+      where: { 
+        customerId,
+        isActive: true 
+      },
+      attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType'],
+      order: [['name', 'ASC']]
+    });
+
+    res.json({ properties });
   } catch (error) {
     next(error);
   }
