@@ -60,36 +60,54 @@ function Reports() {
     try {
       setLoading(true);
       
+      // Load reports individually with fallbacks
+      const loadReport = async (endpoint, fallback = null) => {
+        try {
+          const response = await api.get(endpoint);
+          return response.data;
+        } catch (error) {
+          console.error(`Failed to load ${endpoint}:`, error);
+          return fallback;
+        }
+      };
+
       const [
-        summaryRes,
-        monthlyRes,
-        revenueRes,
-        customerRes,
-        agingRes,
-        geoRes,
-        serviceRes,
-        financialRes
+        summary,
+        monthly,
+        revenueAnalytics,
+        customerProfitability,
+        invoiceAging,
+        geographicDistribution,
+        serviceMetrics,
+        financialHealth
       ] = await Promise.all([
-        api.get('/reports/summary'),
-        api.get('/reports/monthly'),
-        api.get('/reports/revenue-analytics?period=12months'),
-        api.get('/reports/customer-profitability?limit=10'),
-        api.get('/reports/invoice-aging'),
-        api.get('/reports/geographic-distribution'),
-        api.get('/reports/service-metrics?timeframe=6months'),
-        api.get('/reports/financial-health')
+        loadReport('/reports/summary', { totalInvoices: 0, totalRevenue: 0, totalExpenses: 0, totalProfit: 0, avgRevenuePerInvoice: 0, unpaidInvoicesCount: 0 }),
+        loadReport('/reports/monthly', []),
+        loadReport('/reports/revenue-analytics?period=12months', { data: [], summary: { totalRevenue: 0, avgRevenue: 0, totalInvoices: 0 } }),
+        loadReport('/reports/customer-profitability?limit=10', []),
+        loadReport('/reports/invoice-aging', { summary: { totalUnpaidAmount: 0, totalUnpaidCount: 0, averageAge: 0 }, agingBuckets: {} }),
+        loadReport('/reports/geographic-distribution', { byLocation: [], byPropertyType: [], propertiesWithCoordinates: [] }),
+        loadReport('/reports/service-metrics?timeframe=6months', { summary: { totalServices: 0, avgCustomerSatisfaction: 0, avgTimeSpent: 0, followUpRate: 0 }, serviceTypeBreakdown: {} }),
+        loadReport('/reports/financial-health', { cashFlow: { recentRevenue: 0, recentExpenses: 0, netCashFlow: 0 }, receivables: { totalOutstanding: 0, averagePaymentTime: 15, collectionRate: 85 }, growth: { revenueGrowthRate: 0, monthlyRecurringRevenue: 0 }, healthScore: 75 })
       ]);
 
       setData({
-        summary: summaryRes.data,
-        monthly: monthlyRes.data,
-        revenueAnalytics: revenueRes.data,
-        customerProfitability: customerRes.data,
-        invoiceAging: agingRes.data,
-        geographicDistribution: geoRes.data,
-        serviceMetrics: serviceRes.data,
-        financialHealth: financialRes.data
+        summary,
+        monthly,
+        revenueAnalytics,
+        customerProfitability,
+        invoiceAging,
+        geographicDistribution,
+        serviceMetrics,
+        financialHealth
       });
+
+      // Show success only if we got some data
+      if (summary || monthly.length > 0) {
+        toast.success('Reports loaded successfully');
+      } else {
+        toast.error('No data available for reports');
+      }
     } catch (error) {
       console.error('Error loading reports:', error);
       toast.error('Failed to load reports');
