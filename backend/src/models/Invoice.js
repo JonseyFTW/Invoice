@@ -20,6 +20,14 @@ module.exports = (sequelize) => {
         key: 'id'
       }
     },
+    propertyId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'Properties',
+        key: 'id'
+      }
+    },
     invoiceDate: {
       type: DataTypes.DATEONLY,
       allowNull: false,

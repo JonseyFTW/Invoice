@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { formatDate } from '../utils/frontend_utilities';
+import { formatDate, openAddressInMaps } from '../utils/frontend_utilities';
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -127,7 +127,13 @@ function Customers() {
             {customer.billingAddress && (
               <div className="flex items-start text-sm text-gray-600">
                 <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                <span className="whitespace-pre-line">{customer.billingAddress}</span>
+                <button
+                  onClick={() => openAddressInMaps(customer.billingAddress)}
+                  className="whitespace-pre-line text-left hover:text-blue-600 hover:underline transition-colors"
+                  title="Open in Maps"
+                >
+                  {customer.billingAddress}
+                </button>
               </div>
             )}
           </div>
@@ -241,8 +247,18 @@ function Customers() {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 max-w-xs truncate">
-                    {customer.billingAddress || 'No address'}
+                  <div className="text-sm text-gray-900 max-w-xs">
+                    {customer.billingAddress ? (
+                      <button
+                        onClick={() => openAddressInMaps(customer.billingAddress)}
+                        className="truncate hover:text-blue-600 hover:underline transition-colors text-left"
+                        title="Open in Maps"
+                      >
+                        {customer.billingAddress}
+                      </button>
+                    ) : (
+                      'No address'
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

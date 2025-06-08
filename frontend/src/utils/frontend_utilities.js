@@ -365,6 +365,49 @@ export const throttle = (func, limit) => {
   };
 };
 
+// Map and location utilities
+export const formatAddressForMaps = (address) => {
+  if (!address) return null;
+  // Remove extra whitespace and newlines, encode for URL
+  return encodeURIComponent(address.replace(/\s+/g, ' ').trim());
+};
+
+export const openAddressInMaps = (address) => {
+  if (!address) return;
+  
+  const encodedAddress = formatAddressForMaps(address);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isMac = /Mac/.test(navigator.userAgent);
+  
+  // Detect if Google Maps is available (mobile)
+  const googleMapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
+  const appleMapsUrl = `http://maps.apple.com/?q=${encodedAddress}`;
+  
+  if (isIOS || isMac) {
+    // Try Apple Maps first on iOS/Mac, fallback to Google Maps
+    window.open(appleMapsUrl, '_blank');
+  } else {
+    // Use Google Maps on other platforms
+    window.open(googleMapsUrl, '_blank');
+  }
+};
+
+export const getMapDirectionsUrl = (fromAddress, toAddress) => {
+  if (!toAddress) return null;
+  
+  const encodedTo = formatAddressForMaps(toAddress);
+  const encodedFrom = fromAddress ? formatAddressForMaps(fromAddress) : '';
+  
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isMac = /Mac/.test(navigator.userAgent);
+  
+  if (isIOS || isMac) {
+    return `http://maps.apple.com/?${encodedFrom ? `saddr=${encodedFrom}&` : ''}daddr=${encodedTo}`;
+  } else {
+    return `https://www.google.com/maps/dir/${encodedFrom}/${encodedTo}`;
+  }
+};
+
 // Local storage utilities with error handling
 export const safeLocalStorage = {
   get: (key, defaultValue = null) => {

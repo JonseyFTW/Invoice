@@ -23,7 +23,11 @@
       "Bash(cp:*)",
       "Bash(npm run health:*)",
       "Bash(npm run build:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm install)",
+      "Bash(./start-dev.sh:*)",
+      "Bash(bash:*)",
+      "Bash(POSTGRES_PASSWORD=password DB_HOST=localhost DB_USER=postgres DB_NAME=invoice_db node migrations/runMigrations.js)"
     ],
     "deny": []
   }

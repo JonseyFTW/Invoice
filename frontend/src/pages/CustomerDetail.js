@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { openAddressInMaps } from '../utils/frontend_utilities';
 
 const PHOTO_CATEGORIES = [
   { value: 'house_exterior', label: 'House Exterior', color: 'bg-blue-100 text-blue-800' },
@@ -324,7 +325,13 @@ function CustomerDetail() {
                 <MapPin className="h-5 w-5 text-gray-400 mt-1" />
                 <div>
                   <p className="text-sm text-gray-500">Billing Address</p>
-                  <p className="font-medium whitespace-pre-line">{customer.billingAddress}</p>
+                  <button
+                    onClick={() => openAddressInMaps(customer.billingAddress)}
+                    className="font-medium whitespace-pre-line text-left hover:text-blue-600 hover:underline transition-colors"
+                    title="Open in Maps"
+                  >
+                    {customer.billingAddress}
+                  </button>
                 </div>
               </div>
             )}
