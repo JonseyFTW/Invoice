@@ -1,4 +1,4 @@
-const { Invoice, InvoiceLineItem, Customer } = require('../models');
+const { Invoice, InvoiceLineItem, Customer, Property, PropertyServiceHistory } = require('../models');
 const { validationResult } = require('express-validator');
 const { generateInvoiceNumber } = require('../utils/invoiceUtils');
 const pdfService = require('../services/pdfService');
@@ -7,12 +7,13 @@ const { Op } = require('sequelize');
 
 exports.getInvoices = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, customerId, search } = req.query;
+    const { page = 1, limit = 10, status, customerId, propertyId, search } = req.query;
     const offset = (page - 1) * limit;
 
     const whereClause = {};
     if (status) whereClause.status = status;
     if (customerId) whereClause.customerId = customerId;
+    if (propertyId) whereClause.propertyId = propertyId;
     if (search) {
       whereClause.invoiceNumber = { [Op.iLike]: `%${search}%` };
     }
@@ -24,6 +25,11 @@ exports.getInvoices = async (req, res, next) => {
           model: Customer,
           as: 'customer',
           attributes: ['id', 'name', 'email']
+        },
+        {
+          model: Property,
+          as: 'property',
+          attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType']
         },
         {
           model: InvoiceLineItem,
@@ -63,6 +69,11 @@ exports.getInvoice = async (req, res, next) => {
           as: 'customer'
         },
         {
+          model: Property,
+          as: 'property',
+          attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType', 'gateCode', 'keyLocation', 'accessNotes']
+        },
+        {
           model: InvoiceLineItem,
           as: 'lineItems',
           order: [['createdAt', 'ASC']]
@@ -94,7 +105,7 @@ exports.createInvoice = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { customerId, invoiceDate, dueDate, taxRate, notes, lineItems } = req.body;
+    const { customerId, propertyId, invoiceDate, dueDate, taxRate, notes, lineItems } = req.body;
 
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
@@ -103,6 +114,7 @@ exports.createInvoice = async (req, res, next) => {
     const invoice = await Invoice.create({
       invoiceNumber,
       customerId,
+      propertyId: propertyId || null,
       invoiceDate,
       dueDate,
       taxRate: taxRate || 0,
@@ -122,6 +134,7 @@ exports.createInvoice = async (req, res, next) => {
     const completeInvoice = await Invoice.findByPk(invoice.id, {
       include: [
         { model: Customer, as: 'customer' },
+        { model: Property, as: 'property' },
         { model: InvoiceLineItem, as: 'lineItems' }
       ]
     });
@@ -209,16 +222,51 @@ exports.deleteInvoice = async (req, res, next) => {
 
 exports.markAsPaid = async (req, res, next) => {
   try {
-    const invoice = await Invoice.findByPk(req.params.id);
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        { model: Customer, as: 'customer' },
+        { model: Property, as: 'property' },
+        { model: InvoiceLineItem, as: 'lineItems' }
+      ]
+    });
     
     if (!invoice) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
+    // Update invoice status
     await invoice.update({
       status: 'Paid',
       paymentDate: new Date()
     });
+
+    // Create automatic service history entry if property exists
+    if (invoice.propertyId) {
+      const serviceDescription = invoice.lineItems && invoice.lineItems.length > 0
+        ? invoice.lineItems.map(item => `${item.description} (${item.quantity}x)`).join(', ')
+        : 'Service completed as per invoice';
+
+      const totalCost = invoice.getGrandTotal();
+      const serviceDate = invoice.invoiceDate;
+
+      await PropertyServiceHistory.create({
+        propertyId: invoice.propertyId,
+        invoiceId: invoice.id,
+        serviceDate: serviceDate,
+        serviceType: 'other', // Could be enhanced to detect service type from line items
+        description: serviceDescription,
+        totalCost: totalCost,
+        notes: `Automatically created from paid invoice #${invoice.invoiceNumber}`,
+        customerSatisfaction: null // Could be added later via follow-up
+      });
+
+      // Update property's last service date
+      if (invoice.property) {
+        await invoice.property.update({
+          lastServiceDate: serviceDate
+        });
+      }
+    }
 
     res.json({ message: 'Invoice marked as paid', invoice });
   } catch (error) {
