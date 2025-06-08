@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, Edit, Plus, X, Upload, Camera, FileText, 
   MapPin, Phone, Mail, Calendar, Tag, AlertCircle,
@@ -405,7 +405,12 @@ function CustomerDetail() {
                           <Home className="h-6 w-6 text-purple-600" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{property.name}</h3>
+                          <Link 
+                            to={`/properties/${property.id}`}
+                            className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline"
+                          >
+                            {property.name}
+                          </Link>
                           <p className="text-sm text-gray-500 capitalize">{property.propertyType}</p>
                         </div>
                       </div>

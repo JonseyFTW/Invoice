@@ -33,7 +33,8 @@
       "Bash(docker restart:*)",
       "Bash(curl:*)",
       "Bash(npm run migrate:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(DB_HOST=localhost DB_PASS=thisisliterallymypassword JWT_SECRET=2d460c9241c1ac44ed82556a62c61a80970e676a17b23cb43547e8aefecc5025 npm test)"
     ],
     "deny": []
   }

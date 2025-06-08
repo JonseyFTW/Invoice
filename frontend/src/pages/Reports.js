@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -426,7 +427,12 @@ function Reports() {
                     <span className="text-sm font-medium text-blue-600">#{index + 1}</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{customer.name}</p>
+                    <Link 
+                      to={`/customers/${customer.id}`}
+                      className="font-medium text-gray-900 hover:text-blue-600 hover:underline block"
+                    >
+                      {customer.name}
+                    </Link>
                     <p className="text-sm text-gray-500">
                       {customer.invoiceCount} invoices • {customer.propertiesCount} properties
                     </p>
@@ -523,7 +529,20 @@ function Reports() {
                       <p className="text-xs text-gray-500 mb-2">Recent invoices:</p>
                       {data.invoices.slice(0, 3).map(invoice => (
                         <div key={invoice.id} className="text-xs text-gray-600 py-1">
-                          {invoice.invoiceNumber} - {invoice.customerName} - {formatCurrency(invoice.amount)}
+                          <Link 
+                            to={`/invoices/${invoice.id}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {invoice.invoiceNumber}
+                          </Link>
+                          {' - '}
+                          <Link 
+                            to={`/customers/${invoice.customerId}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {invoice.customerName}
+                          </Link>
+                          {' - '}{formatCurrency(invoice.amount)}
                         </div>
                       ))}
                     </div>

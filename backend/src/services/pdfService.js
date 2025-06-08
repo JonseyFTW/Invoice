@@ -3,6 +3,25 @@ const path = require('path');
 const fs = require('fs').promises;
 
 class PDFService {
+  async getLogoBase64() {
+    try {
+      const logoPath = path.join(__dirname, '../../uploads/logo.png');
+      const fallbackPath = path.join(__dirname, '../../../frontend/public/logo.png');
+      
+      let logoBuffer;
+      try {
+        logoBuffer = await fs.readFile(logoPath);
+      } catch {
+        logoBuffer = await fs.readFile(fallbackPath);
+      }
+      
+      return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+    } catch (error) {
+      console.log('Logo not found, using text header');
+      return null;
+    }
+  }
+
   async generateInvoicePDF(invoice) {
     const browser = await puppeteer.launch({
       headless: 'new',
@@ -11,8 +30,9 @@ class PDFService {
 
     try {
       const page = await browser.newPage();
+      const logoBase64 = await this.getLogoBase64();
 
-      const html = this.generateInvoiceHTML(invoice);
+      const html = this.generateInvoiceHTML(invoice, logoBase64);
       await page.setContent(html, { waitUntil: 'networkidle0' });
 
       const pdfBuffer = await page.pdf({
@@ -32,7 +52,7 @@ class PDFService {
     }
   }
 
-  generateInvoiceHTML(invoice) {
+  generateInvoiceHTML(invoice, logoBase64) {
     const subtotal = invoice.getSubtotal();
     const taxAmount = invoice.getTaxAmount();
     const grandTotal = invoice.getGrandTotal();
@@ -51,19 +71,35 @@ class PDFService {
               color: #333;
             }
             .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
+              background: white;
+              color: #333;
               padding: 30px;
-              text-align: center;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              border-bottom: 3px solid #667eea;
+            }
+            .logo-section {
+              display: flex;
+              align-items: center;
+            }
+            .logo {
+              height: 80px;
+              width: auto;
+              margin-right: 20px;
+            }
+            .company-info {
+              text-align: left;
             }
             .company-name {
               font-size: 28px;
               font-weight: bold;
               margin-bottom: 10px;
+              color: #667eea;
             }
             .company-details {
               font-size: 14px;
-              opacity: 0.9;
+              color: #666;
             }
             .content {
               padding: 30px;
@@ -147,11 +183,16 @@ class PDFService {
         </head>
         <body>
           <div class="header">
-            <div class="company-name">${process.env.COMPANY_NAME || 'Home Repair Solutions'}</div>
-            <div class="company-details">
-              ${process.env.COMPANY_ADDRESS || 'Your Business Address'}<br>
-              ${process.env.COMPANY_PHONE || 'Phone: (555) 123-4567'} | 
-              ${process.env.COMPANY_EMAIL || 'Email: info@homerepair.com'}
+            <div class="logo-section">
+              ${logoBase64 ? `<img src="${logoBase64}" alt="Company Logo" class="logo">` : ''}
+              <div class="company-info">
+                <div class="company-name">${process.env.COMPANY_NAME || 'Home Repair Solutions'}</div>
+                <div class="company-details">
+                  ${process.env.COMPANY_ADDRESS || 'Your Business Address'}<br>
+                  ${process.env.COMPANY_PHONE || 'Phone: (555) 123-4567'} | 
+                  ${process.env.COMPANY_EMAIL || 'Email: info@homerepair.com'}
+                </div>
+              </div>
             </div>
           </div>
 
