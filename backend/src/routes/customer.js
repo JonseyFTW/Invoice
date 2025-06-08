@@ -23,41 +23,41 @@ const photoStorage = multer.diskStorage({
     cb(null, customerPhotosDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     cb(null, `customer-${req.params.id}-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
+  },
 });
 
 const photoUpload = multer({
   storage: photoStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
-    } else {
-      cb(new Error('Only image files (JPEG, JPG, PNG, WebP) are allowed'));
     }
-  }
+    cb(new Error('Only image files (JPEG, JPG, PNG, WebP) are allowed'));
+  },
 });
 
 // Validation rules
 const customerValidation = [
   body('name').trim().isLength({ min: 1, max: 100 }).withMessage('Name is required and must be less than 100 characters'),
-  body('email').optional().isEmail().normalizeEmail().withMessage('Please enter a valid email'),
-  body('phone').optional().matches(/^[\d\s\-\+\(\)\.]*$/).withMessage('Please enter a valid phone number')
+  body('email').optional().isEmail().normalizeEmail()
+    .withMessage('Please enter a valid email'),
+  body('phone').optional().matches(/^[\d\s\-\+\(\)\.]*$/).withMessage('Please enter a valid phone number'),
 ];
 
 const noteValidation = [
   body('title').trim().isLength({ min: 1, max: 200 }).withMessage('Title is required and must be less than 200 characters'),
   body('content').trim().isLength({ min: 1 }).withMessage('Content is required'),
   body('category').optional().isIn(['paint_codes', 'materials', 'preferences', 'access_info', 'special_instructions', 'job_history', 'other']).withMessage('Invalid category'),
-  body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Invalid priority')
+  body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Invalid priority'),
 ];
 
 // Basic Customer Routes

@@ -1,12 +1,10 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
+const { User } = require('../models');
 const logger = require('../utils/logger');
 
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
-};
+const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 exports.register = async (req, res, next) => {
   try {
@@ -20,8 +18,8 @@ exports.register = async (req, res, next) => {
     // Check if user already exists
     const existingUser = await User.findOne({
       where: {
-        [Op.or]: [{ email }, { username }]
-      }
+        [Op.or]: [{ email }, { username }],
+      },
     });
 
     if (existingUser) {
@@ -39,8 +37,8 @@ exports.register = async (req, res, next) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
-      }
+        email: user.email,
+      },
     });
   } catch (error) {
     next(error);
@@ -75,8 +73,8 @@ exports.login = async (req, res, next) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
-      }
+        email: user.email,
+      },
     });
   } catch (error) {
     next(error);
@@ -86,7 +84,7 @@ exports.login = async (req, res, next) => {
 exports.getProfile = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.userId, {
-      attributes: ['id', 'username', 'email', 'createdAt']
+      attributes: ['id', 'username', 'email', 'createdAt'],
     });
 
     if (!user) {

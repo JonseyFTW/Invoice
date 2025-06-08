@@ -1,13 +1,17 @@
-const { Invoice, InvoiceLineItem, Customer, Property, PropertyServiceHistory } = require('../models');
 const { validationResult } = require('express-validator');
+const { Op } = require('sequelize');
+const {
+  Invoice, InvoiceLineItem, Customer, Property, PropertyServiceHistory,
+} = require('../models');
 const { generateInvoiceNumber } = require('../utils/invoiceUtils');
 const pdfService = require('../services/pdfService');
 const emailService = require('../services/emailService');
-const { Op } = require('sequelize');
 
 exports.getInvoices = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, customerId, propertyId, search } = req.query;
+    const {
+      page = 1, limit = 10, status, customerId, propertyId, search,
+    } = req.query;
     const offset = (page - 1) * limit;
 
     const whereClause = {};
@@ -24,36 +28,36 @@ exports.getInvoices = async (req, res, next) => {
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'name', 'email']
+          attributes: ['id', 'name', 'email'],
         },
         {
           model: Property,
           as: 'property',
-          attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType']
+          attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType'],
         },
         {
           model: InvoiceLineItem,
-          as: 'lineItems'
-        }
+          as: 'lineItems',
+        },
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['invoiceDate', 'DESC']]
+      order: [['invoiceDate', 'DESC']],
     });
 
     // Add calculated totals
-    const invoicesWithTotals = invoices.map(invoice => ({
+    const invoicesWithTotals = invoices.map((invoice) => ({
       ...invoice.toJSON(),
       subtotal: invoice.getSubtotal(),
       taxAmount: invoice.getTaxAmount(),
-      grandTotal: invoice.getGrandTotal()
+      grandTotal: invoice.getGrandTotal(),
     }));
 
     res.json({
       invoices: invoicesWithTotals,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
-      totalCount: count
+      totalCount: count,
     });
   } catch (error) {
     next(error);
@@ -66,19 +70,19 @@ exports.getInvoice = async (req, res, next) => {
       include: [
         {
           model: Customer,
-          as: 'customer'
+          as: 'customer',
         },
         {
           model: Property,
           as: 'property',
-          attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType', 'gateCode', 'keyLocation', 'accessNotes']
+          attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType', 'gateCode', 'keyLocation', 'accessNotes'],
         },
         {
           model: InvoiceLineItem,
           as: 'lineItems',
-          order: [['createdAt', 'ASC']]
-        }
-      ]
+          order: [['createdAt', 'ASC']],
+        },
+      ],
     });
 
     if (!invoice) {
@@ -89,7 +93,7 @@ exports.getInvoice = async (req, res, next) => {
       ...invoice.toJSON(),
       subtotal: invoice.getSubtotal(),
       taxAmount: invoice.getTaxAmount(),
-      grandTotal: invoice.getGrandTotal()
+      grandTotal: invoice.getGrandTotal(),
     };
 
     res.json({ invoice: invoiceWithTotals });
@@ -105,7 +109,9 @@ exports.createInvoice = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { customerId, propertyId, invoiceDate, dueDate, taxRate, notes, lineItems } = req.body;
+    const {
+      customerId, propertyId, invoiceDate, dueDate, taxRate, notes, lineItems,
+    } = req.body;
 
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
@@ -118,14 +124,14 @@ exports.createInvoice = async (req, res, next) => {
       invoiceDate,
       dueDate,
       taxRate: taxRate || 0,
-      notes
+      notes,
     });
 
     // Create line items
     if (lineItems && lineItems.length > 0) {
-      const lineItemsWithInvoiceId = lineItems.map(item => ({
+      const lineItemsWithInvoiceId = lineItems.map((item) => ({
         ...item,
-        invoiceId: invoice.id
+        invoiceId: invoice.id,
       }));
       await InvoiceLineItem.bulkCreate(lineItemsWithInvoiceId);
     }
@@ -135,15 +141,15 @@ exports.createInvoice = async (req, res, next) => {
       include: [
         { model: Customer, as: 'customer' },
         { model: Property, as: 'property' },
-        { model: InvoiceLineItem, as: 'lineItems' }
-      ]
+        { model: InvoiceLineItem, as: 'lineItems' },
+      ],
     });
 
     const invoiceWithTotals = {
       ...completeInvoice.toJSON(),
       subtotal: completeInvoice.getSubtotal(),
       taxAmount: completeInvoice.getTaxAmount(),
-      grandTotal: completeInvoice.getGrandTotal()
+      grandTotal: completeInvoice.getGrandTotal(),
     };
 
     res.status(201).json({ invoice: invoiceWithTotals });
@@ -173,12 +179,12 @@ exports.updateInvoice = async (req, res, next) => {
     if (lineItems) {
       // Delete existing line items
       await InvoiceLineItem.destroy({ where: { invoiceId: invoice.id } });
-      
+
       // Create new line items
       if (lineItems.length > 0) {
-        const lineItemsWithInvoiceId = lineItems.map(item => ({
+        const lineItemsWithInvoiceId = lineItems.map((item) => ({
           ...item,
-          invoiceId: invoice.id
+          invoiceId: invoice.id,
         }));
         await InvoiceLineItem.bulkCreate(lineItemsWithInvoiceId);
       }
@@ -188,15 +194,15 @@ exports.updateInvoice = async (req, res, next) => {
     const updatedInvoice = await Invoice.findByPk(invoice.id, {
       include: [
         { model: Customer, as: 'customer' },
-        { model: InvoiceLineItem, as: 'lineItems' }
-      ]
+        { model: InvoiceLineItem, as: 'lineItems' },
+      ],
     });
 
     const invoiceWithTotals = {
       ...updatedInvoice.toJSON(),
       subtotal: updatedInvoice.getSubtotal(),
       taxAmount: updatedInvoice.getTaxAmount(),
-      grandTotal: updatedInvoice.getGrandTotal()
+      grandTotal: updatedInvoice.getGrandTotal(),
     };
 
     res.json({ invoice: invoiceWithTotals });
@@ -208,7 +214,7 @@ exports.updateInvoice = async (req, res, next) => {
 exports.deleteInvoice = async (req, res, next) => {
   try {
     const invoice = await Invoice.findByPk(req.params.id);
-    
+
     if (!invoice) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
@@ -226,10 +232,10 @@ exports.markAsPaid = async (req, res, next) => {
       include: [
         { model: Customer, as: 'customer' },
         { model: Property, as: 'property' },
-        { model: InvoiceLineItem, as: 'lineItems' }
-      ]
+        { model: InvoiceLineItem, as: 'lineItems' },
+      ],
     });
-    
+
     if (!invoice) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
@@ -237,13 +243,13 @@ exports.markAsPaid = async (req, res, next) => {
     // Update invoice status
     await invoice.update({
       status: 'Paid',
-      paymentDate: new Date()
+      paymentDate: new Date(),
     });
 
     // Create automatic service history entry if property exists
     if (invoice.propertyId) {
       const serviceDescription = invoice.lineItems && invoice.lineItems.length > 0
-        ? invoice.lineItems.map(item => `${item.description} (${item.quantity}x)`).join(', ')
+        ? invoice.lineItems.map((item) => `${item.description} (${item.quantity}x)`).join(', ')
         : 'Service completed as per invoice';
 
       const totalCost = invoice.getGrandTotal();
@@ -252,18 +258,18 @@ exports.markAsPaid = async (req, res, next) => {
       await PropertyServiceHistory.create({
         propertyId: invoice.propertyId,
         invoiceId: invoice.id,
-        serviceDate: serviceDate,
+        serviceDate,
         serviceType: 'other', // Could be enhanced to detect service type from line items
         description: serviceDescription,
-        totalCost: totalCost,
+        totalCost,
         notes: `Automatically created from paid invoice #${invoice.invoiceNumber}`,
-        customerSatisfaction: null // Could be added later via follow-up
+        customerSatisfaction: null, // Could be added later via follow-up
       });
 
       // Update property's last service date
       if (invoice.property) {
         await invoice.property.update({
-          lastServiceDate: serviceDate
+          lastServiceDate: serviceDate,
         });
       }
     }
@@ -279,8 +285,8 @@ exports.generatePDF = async (req, res, next) => {
     const invoice = await Invoice.findByPk(req.params.id, {
       include: [
         { model: Customer, as: 'customer' },
-        { model: InvoiceLineItem, as: 'lineItems' }
-      ]
+        { model: InvoiceLineItem, as: 'lineItems' },
+      ],
     });
 
     if (!invoice) {
@@ -302,8 +308,8 @@ exports.sendEmail = async (req, res, next) => {
     const invoice = await Invoice.findByPk(req.params.id, {
       include: [
         { model: Customer, as: 'customer' },
-        { model: InvoiceLineItem, as: 'lineItems' }
-      ]
+        { model: InvoiceLineItem, as: 'lineItems' },
+      ],
     });
 
     if (!invoice) {
@@ -315,7 +321,7 @@ exports.sendEmail = async (req, res, next) => {
     }
 
     await emailService.sendInvoiceEmail(invoice);
-    
+
     // Update sent date
     await invoice.update({ sentDate: new Date() });
 

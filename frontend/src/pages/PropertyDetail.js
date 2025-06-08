@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, Edit, Plus, X, Upload, Camera, FileText, 
   MapPin, Phone, Mail, Calendar, Tag, AlertCircle,
@@ -289,7 +289,17 @@ function PropertyDetail() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{property.name}</h1>
               <p className="text-gray-600">
-                {property.customer?.name && `Property of ${property.customer.name}`}
+                {property.customer?.name && (
+                  <>
+                    Property of{' '}
+                    <Link 
+                      to={`/customers/${property.customer.id}`}
+                      className="text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      {property.customer.name}
+                    </Link>
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -759,9 +769,12 @@ function PropertyDetail() {
                           </p>
                         )}
                         {service.invoice && (
-                          <p className="text-sm text-blue-600">
+                          <Link 
+                            to={`/invoices/${service.invoice.id}`}
+                            className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                          >
                             Invoice #{service.invoice.invoiceNumber}
-                          </p>
+                          </Link>
                         )}
                       </div>
                     </div>

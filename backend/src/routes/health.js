@@ -8,8 +8,8 @@ router.get('/', async (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     services: {
-      database: 'unknown'
-    }
+      database: 'unknown',
+    },
   };
 
   try {

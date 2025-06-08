@@ -5,58 +5,58 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
     customerId: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: 'Customers',
-        key: 'id'
-      }
+        key: 'id',
+      },
     },
     filename: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     originalName: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     filePath: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     mimeType: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     fileSize: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     category: {
       type: DataTypes.ENUM('house_exterior', 'house_interior', 'before_work', 'after_work', 'damage', 'materials', 'other'),
-      defaultValue: 'other'
+      defaultValue: 'other',
     },
     uploadedAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    }
+      defaultValue: DataTypes.NOW,
+    },
   }, {
     timestamps: true,
     indexes: [
       {
-        fields: ['customerId']
+        fields: ['customerId'],
       },
       {
-        fields: ['category']
-      }
-    ]
+        fields: ['category'],
+      },
+    ],
   });
 
   return CustomerPhoto;

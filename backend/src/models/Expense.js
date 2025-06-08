@@ -5,51 +5,51 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
     invoiceId: {
       type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: 'Invoices',
-        key: 'id'
-      }
+        key: 'id',
+      },
     },
     vendor: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [1, 100]
-      }
+        len: [1, 100],
+      },
     },
     description: {
       type: DataTypes.TEXT,
       allowNull: false,
       validate: {
-        notEmpty: true
-      }
+        notEmpty: true,
+      },
     },
     amount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       validate: {
-        min: 0
-      }
+        min: 0,
+      },
     },
     expenseDate: {
       type: DataTypes.DATEONLY,
       allowNull: false,
-      defaultValue: DataTypes.NOW
+      defaultValue: DataTypes.NOW,
     },
     receiptImagePath: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
     },
     parsedData: {
       type: DataTypes.JSONB,
-      allowNull: true
-    }
+      allowNull: true,
+    },
   });
 
   return Expense;

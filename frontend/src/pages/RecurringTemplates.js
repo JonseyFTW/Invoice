@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -388,9 +389,12 @@ function RecurringTemplates() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <Link 
+                      to={`/customers/${template.customer?.id}`}
+                      className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline block"
+                    >
                       {template.customer?.name || 'Unknown Customer'}
-                    </div>
+                    </Link>
                     <div className="text-sm text-gray-500">
                       {template.customer?.email}
                     </div>

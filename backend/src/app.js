@@ -12,6 +12,7 @@ const expenseRoutes = require('./routes/expenses');
 const recurringRoutes = require('./routes/recurring');
 const reportRoutes = require('./routes/reports');
 const healthRoutes = require('./routes/health');
+const demoDataRoutes = require('./routes/demoData');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
@@ -24,14 +25,14 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  credentials: true,
 }));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP'
+  message: 'Too many requests from this IP',
 });
 app.use('/api/', limiter);
 
@@ -57,6 +58,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/recurring', recurringRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/demo-data', demoDataRoutes);
 
 // Error handling
 app.use(errorHandler);

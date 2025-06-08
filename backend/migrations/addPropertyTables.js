@@ -7,123 +7,123 @@ module.exports = {
       id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
       },
       customerId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'Customers',
-          key: 'id'
+          key: 'id',
         },
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
       },
       name: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
       },
       address: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: false,
       },
       city: {
         type: DataTypes.STRING(100),
-        allowNull: true
+        allowNull: true,
       },
       state: {
         type: DataTypes.STRING(50),
-        allowNull: true
+        allowNull: true,
       },
       zipCode: {
         type: DataTypes.STRING(20),
-        allowNull: true
+        allowNull: true,
       },
       latitude: {
         type: DataTypes.DECIMAL(10, 8),
-        allowNull: true
+        allowNull: true,
       },
       longitude: {
         type: DataTypes.DECIMAL(11, 8),
-        allowNull: true
+        allowNull: true,
       },
       propertyType: {
         type: DataTypes.ENUM('residential', 'commercial', 'industrial', 'other'),
-        defaultValue: 'residential'
+        defaultValue: 'residential',
       },
       squareFootage: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       yearBuilt: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       bedrooms: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       bathrooms: {
         type: DataTypes.DECIMAL(3, 1),
-        allowNull: true
+        allowNull: true,
       },
       floors: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       description: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       specialInstructions: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       accessNotes: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       gateCode: {
         type: DataTypes.STRING(50),
-        allowNull: true
+        allowNull: true,
       },
       keyLocation: {
         type: DataTypes.STRING(100),
-        allowNull: true
+        allowNull: true,
       },
       contactOnSite: {
         type: DataTypes.STRING(100),
-        allowNull: true
+        allowNull: true,
       },
       contactPhone: {
         type: DataTypes.STRING(20),
-        allowNull: true
+        allowNull: true,
       },
       preferredServiceTime: {
         type: DataTypes.STRING(100),
-        allowNull: true
+        allowNull: true,
       },
       lastServiceDate: {
         type: DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
       },
       nextServiceDate: {
         type: DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
       },
       isActive: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true
+        defaultValue: true,
       },
       createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
     });
 
     // Create PropertyPhotos table
@@ -131,32 +131,32 @@ module.exports = {
       id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
       },
       propertyId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'Properties',
-          key: 'id'
+          key: 'id',
         },
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
       },
       filename: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
       },
       originalName: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
       },
       mimeType: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
       },
       size: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
       },
       category: {
         type: DataTypes.ENUM(
@@ -171,40 +171,40 @@ module.exports = {
           'materials',
           'equipment',
           'access_point',
-          'other'
+          'other',
         ),
-        defaultValue: 'other'
+        defaultValue: 'other',
       },
       description: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       room: {
         type: DataTypes.STRING(50),
-        allowNull: true
+        allowNull: true,
       },
       floor: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       dateTaken: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
       },
       uploadedAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
       },
       createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
     });
 
     // Create PropertyNotes table
@@ -212,24 +212,24 @@ module.exports = {
       id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
       },
       propertyId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'Properties',
-          key: 'id'
+          key: 'id',
         },
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
       },
       title: {
         type: DataTypes.STRING(200),
-        allowNull: false
+        allowNull: false,
       },
       content: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: false,
       },
       category: {
         type: DataTypes.ENUM(
@@ -242,40 +242,40 @@ module.exports = {
           'maintenance_history',
           'client_preferences',
           'safety_concerns',
-          'other'
+          'other',
         ),
-        defaultValue: 'other'
+        defaultValue: 'other',
       },
       priority: {
         type: DataTypes.ENUM('low', 'medium', 'high'),
-        defaultValue: 'medium'
+        defaultValue: 'medium',
       },
       isPrivate: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       reminderDate: {
         type: DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
       },
       room: {
         type: DataTypes.STRING(50),
-        allowNull: true
+        allowNull: true,
       },
       floor: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
     });
 
     // Create PropertyServiceHistories table
@@ -283,28 +283,28 @@ module.exports = {
       id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
       },
       propertyId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'Properties',
-          key: 'id'
+          key: 'id',
         },
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
       },
       invoiceId: {
         type: DataTypes.UUID,
         allowNull: true,
         references: {
           model: 'Invoices',
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       serviceDate: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
       },
       serviceType: {
         type: DataTypes.ENUM(
@@ -316,84 +316,84 @@ module.exports = {
           'consultation',
           'cleanup',
           'preparation',
-          'other'
+          'other',
         ),
-        allowNull: false
+        allowNull: false,
       },
       description: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: false,
       },
       roomsServiced: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       materialsUsed: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       timeSpent: {
         type: DataTypes.DECIMAL(4, 2),
-        allowNull: true
+        allowNull: true,
       },
       laborCost: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true
+        allowNull: true,
       },
       materialCost: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true
+        allowNull: true,
       },
       totalCost: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true
+        allowNull: true,
       },
       technicians: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       beforePhotos: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       afterPhotos: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       notes: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       warrantyInfo: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       followUpRequired: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       followUpDate: {
         type: DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
       },
       customerSatisfaction: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       customerFeedback: {
         type: DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
       },
       createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
     });
 
     // Add propertyId column to Invoices table
@@ -402,8 +402,8 @@ module.exports = {
       allowNull: true,
       references: {
         model: 'Properties',
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
 
     // Add indexes
@@ -412,33 +412,33 @@ module.exports = {
     await queryInterface.addIndex('Properties', ['propertyType']);
     await queryInterface.addIndex('Properties', ['city', 'state']);
     await queryInterface.addIndex('Properties', ['isActive']);
-    
+
     await queryInterface.addIndex('PropertyPhotos', ['propertyId']);
     await queryInterface.addIndex('PropertyPhotos', ['category']);
     await queryInterface.addIndex('PropertyPhotos', ['dateTaken']);
-    
+
     await queryInterface.addIndex('PropertyNotes', ['propertyId']);
     await queryInterface.addIndex('PropertyNotes', ['category']);
     await queryInterface.addIndex('PropertyNotes', ['priority']);
     await queryInterface.addIndex('PropertyNotes', ['reminderDate']);
-    
+
     await queryInterface.addIndex('PropertyServiceHistories', ['propertyId']);
     await queryInterface.addIndex('PropertyServiceHistories', ['invoiceId']);
     await queryInterface.addIndex('PropertyServiceHistories', ['serviceDate']);
     await queryInterface.addIndex('PropertyServiceHistories', ['serviceType']);
     await queryInterface.addIndex('PropertyServiceHistories', ['followUpRequired', 'followUpDate']);
-    
+
     await queryInterface.addIndex('Invoices', ['propertyId']);
   },
 
   down: async (queryInterface, Sequelize) => {
     // Remove propertyId column from Invoices
     await queryInterface.removeColumn('Invoices', 'propertyId');
-    
+
     // Drop tables in reverse dependency order
     await queryInterface.dropTable('PropertyServiceHistories');
     await queryInterface.dropTable('PropertyNotes');
     await queryInterface.dropTable('PropertyPhotos');
     await queryInterface.dropTable('Properties');
-  }
+  },
 };

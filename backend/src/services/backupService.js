@@ -21,14 +21,14 @@ class BackupService {
     try {
       await fs.mkdir(this.backupDir, { recursive: true });
       logger.info('Backup service initialized');
-      
+
       // Schedule automated backups
       cron.schedule(this.schedule, async () => {
         logger.info('Running scheduled database backup');
         await this.createBackup();
         await this.cleanupOldBackups();
       });
-      
+
       logger.info(`Backup scheduled: ${this.schedule}`);
     } catch (error) {
       logger.error('Failed to initialize backup service:', error);
@@ -42,28 +42,28 @@ class BackupService {
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFile = path.join(this.backupDir, `backup-${timestamp}.sql`);
-    
+
     const dbConfig = {
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT || 5432,
       database: process.env.DB_NAME || 'invoice_db',
       username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASS || 'password'
+      password: process.env.DB_PASS || 'password',
     };
 
     return new Promise((resolve, reject) => {
       const command = `PGPASSWORD="${dbConfig.password}" pg_dump -h ${dbConfig.host} -p ${dbConfig.port} -U ${dbConfig.username} -d ${dbConfig.database} -f "${backupFile}" --verbose`;
-      
+
       exec(command, (error, stdout, stderr) => {
         if (error) {
           logger.error('Backup failed:', error);
           reject(error);
           return;
         }
-        
+
         logger.info(`Database backup created: ${backupFile}`);
         logger.debug('Backup output:', stdout);
-        
+
         resolve(backupFile);
       });
     });
@@ -79,22 +79,22 @@ class BackupService {
       port: process.env.DB_PORT || 5432,
       database: process.env.DB_NAME || 'invoice_db',
       username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASS || 'password'
+      password: process.env.DB_PASS || 'password',
     };
 
     return new Promise((resolve, reject) => {
       const command = `PGPASSWORD="${dbConfig.password}" psql -h ${dbConfig.host} -p ${dbConfig.port} -U ${dbConfig.username} -d ${dbConfig.database} -f "${backupFile}"`;
-      
+
       exec(command, (error, stdout, stderr) => {
         if (error) {
           logger.error('Restore failed:', error);
           reject(error);
           return;
         }
-        
+
         logger.info(`Database restored from: ${backupFile}`);
         logger.debug('Restore output:', stdout);
-        
+
         resolve(stdout);
       });
     });
@@ -104,14 +104,14 @@ class BackupService {
     try {
       const files = await fs.readdir(this.backupDir);
       const backupFiles = files
-        .filter(file => file.startsWith('backup-') && file.endsWith('.sql'))
-        .map(file => ({
+        .filter((file) => file.startsWith('backup-') && file.endsWith('.sql'))
+        .map((file) => ({
           filename: file,
           path: path.join(this.backupDir, file),
-          timestamp: file.replace('backup-', '').replace('.sql', '')
+          timestamp: file.replace('backup-', '').replace('.sql', ''),
         }))
         .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-      
+
       return backupFiles;
     } catch (error) {
       logger.error('Failed to list backups:', error);
@@ -124,17 +124,17 @@ class BackupService {
       const backups = await this.listBackups();
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
-      
-      const filesToDelete = backups.filter(backup => {
+
+      const filesToDelete = backups.filter((backup) => {
         const backupDate = new Date(backup.timestamp.replace(/-/g, ':'));
         return backupDate < cutoffDate;
       });
-      
+
       for (const file of filesToDelete) {
         await fs.unlink(file.path);
         logger.info(`Deleted old backup: ${file.filename}`);
       }
-      
+
       if (filesToDelete.length > 0) {
         logger.info(`Cleaned up ${filesToDelete.length} old backups`);
       }
@@ -146,7 +146,7 @@ class BackupService {
   async getBackupInfo() {
     const backups = await this.listBackups();
     const totalSize = await this.calculateBackupSize();
-    
+
     return {
       enabled: this.enabled,
       schedule: this.schedule,
@@ -154,7 +154,7 @@ class BackupService {
       backupCount: backups.length,
       totalSize,
       latestBackup: backups[0] || null,
-      backupDirectory: this.backupDir
+      backupDirectory: this.backupDir,
     };
   }
 
@@ -162,12 +162,12 @@ class BackupService {
     try {
       const backups = await this.listBackups();
       let totalSize = 0;
-      
+
       for (const backup of backups) {
         const stats = await fs.stat(backup.path);
         totalSize += stats.size;
       }
-      
+
       return totalSize;
     } catch (error) {
       logger.error('Failed to calculate backup size:', error);

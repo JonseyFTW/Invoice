@@ -1,6 +1,10 @@
 const { Invoice, InvoiceLineItem, Customer, Expense, Property, PropertyServiceHistory } = require('../models');
 const { Op, fn, col, literal } = require('sequelize');
 const { startOfYear, endOfYear, subMonths, format } = require('date-fns');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs').promises;
 
 exports.getSummary = async (req, res, next) => {
   try {
@@ -833,3 +837,420 @@ exports.getFinancialHealth = async (req, res, next) => {
     });
   }
 };
+
+// Export Report as CSV
+exports.exportReportCSV = async (req, res, next) => {
+  try {
+    const { type, period, timeframe, limit } = req.query;
+    
+    let data = [];
+    let filename = `report_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    let headers = [];
+
+    switch (type) {
+      case 'revenue':
+        // Get revenue analytics data
+        const invoices = await Invoice.findAll({
+          where: {
+            invoiceDate: {
+              [Op.gte]: subMonths(new Date(), 11)
+            }
+          },
+          include: [{ model: InvoiceLineItem, as: 'lineItems', attributes: ['lineTotal'] }],
+          order: [['invoiceDate', 'ASC']]
+        });
+
+        const dataMap = new Map();
+        invoices.forEach(invoice => {
+          const periodKey = format(new Date(invoice.invoiceDate), 'yyyy-MM');
+          if (!dataMap.has(periodKey)) {
+            dataMap.set(periodKey, {
+              period: periodKey,
+              totalRevenue: 0,
+              paidRevenue: 0,
+              unpaidRevenue: 0,
+              overdueRevenue: 0,
+              invoiceCount: 0
+            });
+          }
+
+          const periodData = dataMap.get(periodKey);
+          const amount = invoice.lineItems.reduce((sum, item) => sum + parseFloat(item.lineTotal || 0), 0);
+          
+          periodData.totalRevenue += amount;
+          periodData.invoiceCount += 1;
+          
+          if (invoice.status === 'Paid') {
+            periodData.paidRevenue += amount;
+          } else if (invoice.status === 'Overdue') {
+            periodData.overdueRevenue += amount;
+          } else {
+            periodData.unpaidRevenue += amount;
+          }
+        });
+
+        data = Array.from(dataMap.values());
+        headers = [
+          { id: 'period', title: 'Period' },
+          { id: 'totalRevenue', title: 'Total Revenue' },
+          { id: 'paidRevenue', title: 'Paid Revenue' },
+          { id: 'unpaidRevenue', title: 'Unpaid Revenue' },
+          { id: 'overdueRevenue', title: 'Overdue Revenue' },
+          { id: 'invoiceCount', title: 'Invoice Count' }
+        ];
+        filename = `revenue_analytics_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+        break;
+
+      case 'customers':
+        // Get customer profitability data
+        const customers = await Customer.findAll({
+          attributes: ['id', 'name', 'email', 'createdAt']
+        });
+
+        const customerData = await Promise.all(customers.map(async (customer) => {
+          try {
+            const customerInvoices = await Invoice.findAll({
+              where: { customerId: customer.id },
+              include: [{ model: InvoiceLineItem, as: 'lineItems', attributes: ['lineTotal'] }]
+            });
+
+            const totalRevenue = customerInvoices.reduce((sum, invoice) => {
+              return sum + invoice.lineItems.reduce((lineSum, item) => lineSum + parseFloat(item.lineTotal || 0), 0);
+            }, 0);
+
+            const paidInvoices = customerInvoices.filter(inv => inv.status === 'Paid');
+            const paidRevenue = paidInvoices.reduce((sum, invoice) => {
+              return sum + invoice.lineItems.reduce((lineSum, item) => lineSum + parseFloat(item.lineTotal || 0), 0);
+            }, 0);
+
+            return {
+              name: customer.name,
+              email: customer.email,
+              totalRevenue: totalRevenue.toFixed(2),
+              paidRevenue: paidRevenue.toFixed(2),
+              unpaidRevenue: (totalRevenue - paidRevenue).toFixed(2),
+              invoiceCount: customerInvoices.length,
+              paymentRate: customerInvoices.length > 0 ? ((paidInvoices.length / customerInvoices.length) * 100).toFixed(1) : '0'
+            };
+          } catch (error) {
+            return null;
+          }
+        }));
+
+        data = customerData.filter(c => c !== null && parseFloat(c.totalRevenue) > 0)
+          .sort((a, b) => parseFloat(b.totalRevenue) - parseFloat(a.totalRevenue))
+          .slice(0, parseInt(limit) || 10);
+        
+        headers = [
+          { id: 'name', title: 'Customer Name' },
+          { id: 'email', title: 'Email' },
+          { id: 'totalRevenue', title: 'Total Revenue' },
+          { id: 'paidRevenue', title: 'Paid Revenue' },
+          { id: 'unpaidRevenue', title: 'Unpaid Revenue' },
+          { id: 'invoiceCount', title: 'Invoice Count' },
+          { id: 'paymentRate', title: 'Payment Rate (%)' }
+        ];
+        filename = `customer_profitability_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+        break;
+
+      case 'aging':
+        const agingInvoices = await Invoice.findAll({
+          where: {
+            status: { [Op.in]: ['Unpaid', 'Overdue'] }
+          },
+          include: [
+            { model: Customer, as: 'customer', attributes: ['name', 'email'] },
+            { model: InvoiceLineItem, as: 'lineItems', attributes: ['lineTotal'] }
+          ]
+        });
+
+        data = agingInvoices.map(invoice => {
+          const totalAmount = invoice.lineItems.reduce((sum, item) => sum + parseFloat(item.lineTotal || 0), 0);
+          const daysPastDue = Math.max(0, Math.floor((new Date() - new Date(invoice.dueDate)) / (1000 * 60 * 60 * 24)));
+          
+          return {
+            invoiceNumber: invoice.invoiceNumber,
+            customerName: invoice.customer.name,
+            customerEmail: invoice.customer.email,
+            amount: totalAmount.toFixed(2),
+            dueDate: format(new Date(invoice.dueDate), 'yyyy-MM-dd'),
+            daysPastDue,
+            status: invoice.status
+          };
+        });
+
+        headers = [
+          { id: 'invoiceNumber', title: 'Invoice Number' },
+          { id: 'customerName', title: 'Customer Name' },
+          { id: 'customerEmail', title: 'Customer Email' },
+          { id: 'amount', title: 'Amount' },
+          { id: 'dueDate', title: 'Due Date' },
+          { id: 'daysPastDue', title: 'Days Past Due' },
+          { id: 'status', title: 'Status' }
+        ];
+        filename = `invoice_aging_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+        break;
+
+      default:
+        return res.status(400).json({ message: 'Invalid report type for CSV export' });
+    }
+
+    if (data.length === 0) {
+      return res.status(404).json({ message: 'No data available for export' });
+    }
+
+    // Create CSV file
+    const csvPath = path.join(__dirname, '../../uploads', filename);
+    const csvWriter = createCsvWriter({
+      path: csvPath,
+      header: headers
+    });
+
+    await csvWriter.writeRecords(data);
+
+    // Send file
+    res.download(csvPath, filename, (err) => {
+      if (err) {
+        console.error('Download error:', err);
+      }
+      // Clean up file after download
+      fs.unlink(csvPath).catch(console.error);
+    });
+
+  } catch (error) {
+    console.error('CSV export error:', error);
+    res.status(500).json({ message: 'Failed to export CSV', error: error.message });
+  }
+};
+
+// Export Report as PDF
+exports.exportReportPDF = async (req, res, next) => {
+  try {
+    const { type } = req.query;
+    
+    let reportData = {};
+    let reportTitle = 'Business Report';
+
+    // Get the data based on report type
+    switch (type) {
+      case 'overview':
+        // Get summary data
+        const summaryResponse = await exports.getSummary({ query: {} }, { json: (data) => data }, next);
+        const monthlyResponse = await exports.getMonthlyData({ query: {} }, { json: (data) => data }, next);
+        reportData = { summary: summaryResponse, monthly: monthlyResponse };
+        reportTitle = 'Business Overview Report';
+        break;
+      
+      case 'financial':
+        reportData = await exports.getFinancialHealth({ query: {} }, { json: (data) => data }, next);
+        reportTitle = 'Financial Health Report';
+        break;
+      
+      default:
+        return res.status(400).json({ message: 'Invalid report type for PDF export' });
+    }
+
+    // Generate HTML content
+    const htmlContent = generateReportHTML(reportData, reportTitle);
+    
+    // Generate PDF using Puppeteer
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '20mm',
+        bottom: '20mm',
+        left: '20mm'
+      }
+    });
+    
+    await browser.close();
+
+    const filename = `${type}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('PDF export error:', error);
+    res.status(500).json({ message: 'Failed to export PDF', error: error.message });
+  }
+};
+
+// Helper function to generate HTML for PDF reports
+function generateReportHTML(data, title) {
+  const currentDate = format(new Date(), 'MMMM dd, yyyy');
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px solid #3b82f6;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .header h1 {
+          color: #1f2937;
+          margin: 0;
+          font-size: 28px;
+        }
+        .date {
+          color: #6b7280;
+          font-size: 14px;
+          margin-top: 5px;
+        }
+        .section {
+          margin-bottom: 30px;
+          padding: 20px;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+        }
+        .section h2 {
+          color: #374151;
+          border-bottom: 1px solid #d1d5db;
+          padding-bottom: 10px;
+          margin-top: 0;
+        }
+        .metric {
+          display: inline-block;
+          margin: 10px 20px 10px 0;
+          padding: 15px;
+          background: #f9fafb;
+          border-radius: 6px;
+          min-width: 150px;
+        }
+        .metric-label {
+          font-size: 12px;
+          color: #6b7280;
+          text-transform: uppercase;
+          margin-bottom: 5px;
+        }
+        .metric-value {
+          font-size: 24px;
+          font-weight: bold;
+          color: #1f2937;
+        }
+        .positive { color: #059669; }
+        .negative { color: #dc2626; }
+        .footer {
+          margin-top: 40px;
+          text-align: center;
+          font-size: 12px;
+          color: #6b7280;
+          border-top: 1px solid #e5e7eb;
+          padding-top: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>${title}</h1>
+        <div class="date">Generated on ${currentDate}</div>
+      </div>
+      
+      ${generateReportContent(data, title)}
+      
+      <div class="footer">
+        <p>Generated by Invoice Management System</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateReportContent(data, title) {
+  if (title.includes('Overview')) {
+    return `
+      <div class="section">
+        <h2>Summary Metrics</h2>
+        <div class="metric">
+          <div class="metric-label">Total Revenue</div>
+          <div class="metric-value">$${(data.summary?.totalRevenue || 0).toLocaleString()}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Total Invoices</div>
+          <div class="metric-value">${data.summary?.totalInvoices || 0}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Unpaid Invoices</div>
+          <div class="metric-value">${data.summary?.unpaidInvoicesCount || 0}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Net Profit</div>
+          <div class="metric-value ${(data.summary?.totalProfit || 0) >= 0 ? 'positive' : 'negative'}">
+            $${(data.summary?.totalProfit || 0).toLocaleString()}
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (title.includes('Financial Health')) {
+    return `
+      <div class="section">
+        <h2>Financial Health Score</h2>
+        <div class="metric">
+          <div class="metric-label">Overall Score</div>
+          <div class="metric-value">${(data.healthScore || 0).toFixed(1)}/100</div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2>Cash Flow (30 Days)</h2>
+        <div class="metric">
+          <div class="metric-label">Revenue</div>
+          <div class="metric-value positive">$${(data.cashFlow?.recentRevenue || 0).toLocaleString()}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Expenses</div>
+          <div class="metric-value negative">$${(data.cashFlow?.recentExpenses || 0).toLocaleString()}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Net Cash Flow</div>
+          <div class="metric-value ${(data.cashFlow?.netCashFlow || 0) >= 0 ? 'positive' : 'negative'}">
+            $${(data.cashFlow?.netCashFlow || 0).toLocaleString()}
+          </div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2>Receivables</h2>
+        <div class="metric">
+          <div class="metric-label">Outstanding</div>
+          <div class="metric-value">$${(data.receivables?.totalOutstanding || 0).toLocaleString()}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Avg Payment Time</div>
+          <div class="metric-value">${data.receivables?.averagePaymentTime || 0} days</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Collection Rate</div>
+          <div class="metric-value">${(data.receivables?.collectionRate || 0).toFixed(1)}%</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  return '<div class="section"><p>Report data not available</p></div>';
+}

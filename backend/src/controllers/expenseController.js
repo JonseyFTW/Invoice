@@ -23,21 +23,21 @@ exports.getExpenses = async (req, res, next) => {
             {
               model: Customer,
               as: 'customer',
-              attributes: ['id', 'name']
-            }
-          ]
-        }
+              attributes: ['id', 'name'],
+            },
+          ],
+        },
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['expenseDate', 'DESC']]
+      order: [['expenseDate', 'DESC']],
     });
 
     res.json({
       expenses,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
-      totalCount: count
+      totalCount: count,
     });
   } catch (error) {
     next(error);
@@ -54,11 +54,11 @@ exports.getExpense = async (req, res, next) => {
           include: [
             {
               model: Customer,
-              as: 'customer'
-            }
-          ]
-        }
-      ]
+              as: 'customer',
+            },
+          ],
+        },
+      ],
     });
 
     if (!expense) {
@@ -88,7 +88,7 @@ exports.createExpense = async (req, res, next) => {
     // Handle file upload and parsing
     if (req.file) {
       receiptImagePath = req.file.path;
-      
+
       try {
         // Parse receipt with Gemini
         const fileBuffer = await fs.readFile(req.file.path);
@@ -102,7 +102,7 @@ exports.createExpense = async (req, res, next) => {
     const expenseData = {
       ...req.body,
       receiptImagePath,
-      parsedData
+      parsedData,
     };
 
     const expense = await Expense.create(expenseData);
@@ -110,13 +110,13 @@ exports.createExpense = async (req, res, next) => {
     // If we have parsed data and an invoice ID, create line items
     if (parsedData && parsedData.lineItems && req.body.invoiceId) {
       const { InvoiceLineItem } = require('../models');
-      
-      const lineItemsData = parsedData.lineItems.map(item => ({
+
+      const lineItemsData = parsedData.lineItems.map((item) => ({
         invoiceId: req.body.invoiceId,
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        lineTotal: item.lineTotal
+        lineTotal: item.lineTotal,
       }));
 
       await InvoiceLineItem.bulkCreate(lineItemsData);
@@ -131,16 +131,16 @@ exports.createExpense = async (req, res, next) => {
           include: [
             {
               model: Customer,
-              as: 'customer'
-            }
-          ]
-        }
-      ]
+              as: 'customer',
+            },
+          ],
+        },
+      ],
     });
 
-    res.status(201).json({ 
+    res.status(201).json({
       expense: completeExpense,
-      parsedData: parsedData
+      parsedData,
     });
   } catch (error) {
     // Clean up uploaded file on error
@@ -169,7 +169,7 @@ exports.updateExpense = async (req, res, next) => {
       return res.status(404).json({ message: 'Expense not found' });
     }
 
-    let updateData = { ...req.body };
+    const updateData = { ...req.body };
 
     // Handle new file upload
     if (req.file) {
@@ -177,9 +177,9 @@ exports.updateExpense = async (req, res, next) => {
       if (expense.receiptImagePath) {
         await fs.unlink(expense.receiptImagePath).catch(() => {});
       }
-      
+
       updateData.receiptImagePath = req.file.path;
-      
+
       try {
         // Parse new receipt
         const fileBuffer = await fs.readFile(req.file.path);
@@ -199,11 +199,11 @@ exports.updateExpense = async (req, res, next) => {
           include: [
             {
               model: Customer,
-              as: 'customer'
-            }
-          ]
-        }
-      ]
+              as: 'customer',
+            },
+          ],
+        },
+      ],
     });
 
     res.json({ expense: updatedExpense });
@@ -218,7 +218,7 @@ exports.updateExpense = async (req, res, next) => {
 exports.deleteExpense = async (req, res, next) => {
   try {
     const expense = await Expense.findByPk(req.params.id);
-    
+
     if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
     }
@@ -238,19 +238,19 @@ exports.deleteExpense = async (req, res, next) => {
 exports.parseReceipt = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No receipt image uploaded' 
+      return res.status(400).json({
+        success: false,
+        message: 'No receipt image uploaded',
       });
     }
 
     try {
       const fileBuffer = await fs.readFile(req.file.path);
       const parsedData = await geminiService.parseReceipt(fileBuffer);
-      
+
       // Clean up uploaded file after parsing
       await fs.unlink(req.file.path).catch(() => {});
-      
+
       res.json({
         success: true,
         lineItems: parsedData.lineItems || [],
@@ -258,16 +258,16 @@ exports.parseReceipt = async (req, res, next) => {
         date: parsedData.date,
         subtotal: parsedData.subtotal,
         tax: parsedData.tax,
-        total: parsedData.total
+        total: parsedData.total,
       });
     } catch (parseError) {
       // Clean up uploaded file on parse error
       await fs.unlink(req.file.path).catch(() => {});
-      
+
       console.error('Receipt parsing failed:', parseError.message);
-      res.status(422).json({ 
-        success: false, 
-        message: `Receipt parsing failed: ${parseError.message}` 
+      res.status(422).json({
+        success: false,
+        message: `Receipt parsing failed: ${parseError.message}`,
       });
     }
   } catch (error) {

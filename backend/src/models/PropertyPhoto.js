@@ -5,23 +5,23 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
     filename: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     originalName: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     mimeType: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     size: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
     },
     category: {
       type: DataTypes.ENUM(
@@ -36,42 +36,42 @@ module.exports = (sequelize) => {
         'materials',
         'equipment',
         'access_point',
-        'other'
+        'other',
       ),
-      defaultValue: 'other'
+      defaultValue: 'other',
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     room: {
       type: DataTypes.STRING(50),
-      allowNull: true
+      allowNull: true,
     },
     floor: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: true,
     },
     dateTaken: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      defaultValue: DataTypes.NOW,
     },
     uploadedAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    }
+      defaultValue: DataTypes.NOW,
+    },
   }, {
     indexes: [
       {
-        fields: ['propertyId']
+        fields: ['propertyId'],
       },
       {
-        fields: ['category']
+        fields: ['category'],
       },
       {
-        fields: ['dateTaken']
-      }
-    ]
+        fields: ['dateTaken'],
+      },
+    ],
   });
 
   return PropertyPhoto;

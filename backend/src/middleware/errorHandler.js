@@ -5,13 +5,13 @@ const errorHandler = (err, req, res, next) => {
 
   // Sequelize validation errors
   if (err.name === 'SequelizeValidationError') {
-    const errors = err.errors.map(e => ({
+    const errors = err.errors.map((e) => ({
       field: e.path,
-      message: e.message
+      message: e.message,
     }));
     return res.status(400).json({
       message: 'Validation failed',
-      errors
+      errors,
     });
   }
 
@@ -19,7 +19,7 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === 'SequelizeUniqueConstraintError') {
     return res.status(400).json({
       message: 'Duplicate entry',
-      field: err.errors[0].path
+      field: err.errors[0].path,
     });
   }
 
@@ -40,7 +40,7 @@ const errorHandler = (err, req, res, next) => {
   // Default error
   res.status(err.status || 500).json({
     message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };
 

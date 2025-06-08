@@ -197,17 +197,22 @@ function Invoices() {
               <span className="ml-1">{invoice.status}</span>
             </span>
           </div>
-          <p className="text-sm text-gray-600 mb-1">{invoice.customer?.name}</p>
+          <Link 
+            to={`/customers/${invoice.customer?.id}`}
+            className="text-sm text-gray-600 hover:text-blue-600 hover:underline mb-1 block"
+          >
+            {invoice.customer?.name}
+          </Link>
           {invoice.property && (
             <div className="flex items-center text-sm text-gray-500 mb-1">
               <Home className="h-3 w-3 mr-1" />
-              <button
-                onClick={() => openAddressInMaps(invoice.property.address)}
+              <Link
+                to={`/properties/${invoice.property.id}`}
                 className="hover:text-blue-600 hover:underline transition-colors truncate"
-                title="Open in Maps"
+                title="View Property Details"
               >
                 {invoice.property.name}
-              </button>
+              </Link>
             </div>
           )}
           <p className="text-sm text-gray-500">
@@ -322,12 +327,22 @@ function Invoices() {
               <tr key={invoice.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
+                    <Link 
+                      to={`/invoices/${invoice.id}`}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      {invoice.invoiceNumber}
+                    </Link>
                     <div className="text-sm text-gray-500">{formatDate(invoice.invoiceDate)}</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{invoice.customer?.name}</div>
+                  <Link 
+                    to={`/customers/${invoice.customer?.id}`}
+                    className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline block"
+                  >
+                    {invoice.customer?.name}
+                  </Link>
                   <div className="text-sm text-gray-500">{invoice.customer?.email}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -335,7 +350,12 @@ function Invoices() {
                     <div>
                       <div className="flex items-center text-sm font-medium text-gray-900">
                         <Home className="h-3 w-3 mr-1" />
-                        {invoice.property.name}
+                        <Link
+                          to={`/properties/${invoice.property.id}`}
+                          className="hover:text-blue-600 hover:underline"
+                        >
+                          {invoice.property.name}
+                        </Link>
                       </div>
                       <button
                         onClick={() => openAddressInMaps(invoice.property.address)}

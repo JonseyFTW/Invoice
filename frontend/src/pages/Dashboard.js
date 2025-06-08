@@ -298,8 +298,18 @@ function Dashboard() {
                 <div key={invoice.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div>
-                      <p className="font-medium text-gray-900">{invoice.invoiceNumber}</p>
-                      <p className="text-sm text-gray-600">{invoice.customer?.name}</p>
+                      <Link 
+                        to={`/invoices/${invoice.id}`}
+                        className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                      >
+                        {invoice.invoiceNumber}
+                      </Link>
+                      <Link 
+                        to={`/customers/${invoice.customer?.id}`}
+                        className="text-sm text-gray-600 hover:text-gray-800 hover:underline block"
+                      >
+                        {invoice.customer?.name}
+                      </Link>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -387,7 +397,12 @@ function Dashboard() {
               <div className="space-y-2">
                 {overdueInvoices.slice(0, 3).map((invoice) => (
                   <div key={invoice.id} className="flex justify-between items-center text-sm">
-                    <span className="text-red-800">{invoice.invoiceNumber}</span>
+                    <Link 
+                      to={`/invoices/${invoice.id}`}
+                      className="text-red-800 hover:text-red-900 hover:underline"
+                    >
+                      {invoice.invoiceNumber}
+                    </Link>
                     <span className="font-medium text-red-900">
                       {formatCurrency(invoice.grandTotal)}
                     </span>
@@ -415,7 +430,12 @@ function Dashboard() {
                       <div className="bg-blue-100 w-8 h-8 rounded-full flex items-center justify-center">
                         <span className="text-blue-600 text-sm font-medium">#{index + 1}</span>
                       </div>
-                      <span className="font-medium text-gray-900">{customer.name}</span>
+                      <Link 
+                        to={`/customers/${customer.id}`}
+                        className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                      >
+                        {customer.name}
+                      </Link>
                     </div>
                     <span className="text-sm font-medium text-gray-600">
                       {formatCurrency(customer.totalRevenue)}

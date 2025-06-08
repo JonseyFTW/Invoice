@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -9,6 +10,8 @@ import {
   Download,
   Filter,
   RefreshCw,
+  FileDown,
+  FileSpreadsheet,
   BarChart3,
   PieChart,
   LineChart,
@@ -31,6 +34,7 @@ function Reports() {
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [data, setData] = useState({
     summary: null,
     monthly: [],
@@ -121,6 +125,70 @@ function Reports() {
     await loadAllReports();
     setRefreshing(false);
     toast.success('Reports refreshed successfully');
+  };
+
+  const exportReport = async (format) => {
+    try {
+      setExporting(true);
+      
+      let exportType = selectedReport;
+      let params = {};
+      
+      // Map report types to export types
+      switch (selectedReport) {
+        case 'overview':
+          exportType = 'overview';
+          break;
+        case 'revenue':
+          exportType = 'revenue';
+          params.period = '12months';
+          break;
+        case 'customers':
+          exportType = 'customers';
+          params.limit = 10;
+          break;
+        case 'aging':
+          exportType = 'aging';
+          break;
+        case 'financial':
+          exportType = 'financial';
+          break;
+        default:
+          toast.error('Export not available for this report type');
+          return;
+      }
+
+      const queryParams = new URLSearchParams({
+        type: exportType,
+        ...params
+      });
+
+      const endpoint = format === 'csv' ? 'csv' : 'pdf';
+      const response = await api.get(`/reports/export/${endpoint}?${queryParams}`, {
+        responseType: 'blob'
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const fileExtension = format === 'csv' ? 'csv' : 'pdf';
+      const fileName = `${exportType}_report_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+      link.setAttribute('download', fileName);
+      
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`${format.toUpperCase()} report downloaded successfully`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error(`Failed to export ${format.toUpperCase()} report`);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const StatCard = ({ title, value, icon: Icon, color, subtitle, trend }) => (
@@ -359,7 +427,12 @@ function Reports() {
                     <span className="text-sm font-medium text-blue-600">#{index + 1}</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{customer.name}</p>
+                    <Link 
+                      to={`/customers/${customer.id}`}
+                      className="font-medium text-gray-900 hover:text-blue-600 hover:underline block"
+                    >
+                      {customer.name}
+                    </Link>
                     <p className="text-sm text-gray-500">
                       {customer.invoiceCount} invoices • {customer.propertiesCount} properties
                     </p>
@@ -456,7 +529,20 @@ function Reports() {
                       <p className="text-xs text-gray-500 mb-2">Recent invoices:</p>
                       {data.invoices.slice(0, 3).map(invoice => (
                         <div key={invoice.id} className="text-xs text-gray-600 py-1">
-                          {invoice.invoiceNumber} - {invoice.customerName} - {formatCurrency(invoice.amount)}
+                          <Link 
+                            to={`/invoices/${invoice.id}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {invoice.invoiceNumber}
+                          </Link>
+                          {' - '}
+                          <Link 
+                            to={`/customers/${invoice.customerId}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {invoice.customerName}
+                          </Link>
+                          {' - '}{formatCurrency(invoice.amount)}
                         </div>
                       ))}
                     </div>
@@ -721,10 +807,47 @@ function Reports() {
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </button>
+          
+          {/* Export Dropdown */}
+          <div className="relative group">
+            <button 
+              disabled={exporting}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {exporting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </>
+              )}
+            </button>
+            
+            {!exporting && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="py-2">
+                  <button
+                    onClick={() => exportReport('csv')}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-3 text-green-600" />
+                    Export as CSV
+                  </button>
+                  <button
+                    onClick={() => exportReport('pdf')}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <FileDown className="h-4 w-4 mr-3 text-red-600" />
+                    Export as PDF
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

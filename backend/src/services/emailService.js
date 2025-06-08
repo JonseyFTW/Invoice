@@ -8,8 +8,8 @@ class EmailService {
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS
-      }
+        pass: process.env.GMAIL_PASS,
+      },
     });
   }
 
@@ -27,14 +27,14 @@ class EmailService {
           {
             filename: `invoice-${invoice.invoiceNumber}.pdf`,
             content: pdfBuffer,
-            contentType: 'application/pdf'
-          }
-        ]
+            contentType: 'application/pdf',
+          },
+        ],
       };
 
       const result = await this.transporter.sendMail(mailOptions);
       logger.info(`Invoice email sent: ${invoice.invoiceNumber} to ${invoice.customer.email}`);
-      
+
       return result;
     } catch (error) {
       logger.error('Email sending failed:', error);
@@ -44,7 +44,7 @@ class EmailService {
 
   generateEmailHTML(invoice) {
     const grandTotal = invoice.getGrandTotal();
-    
+
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
