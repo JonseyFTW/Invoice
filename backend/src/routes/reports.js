@@ -20,4 +20,8 @@ router.get('/geographic-distribution', reportController.getGeographicDistributio
 router.get('/service-metrics', reportController.getServiceMetrics);
 router.get('/financial-health', reportController.getFinancialHealth);
 
+// Export Routes
+router.get('/export/csv', reportController.exportReportCSV);
+router.get('/export/pdf', reportController.exportReportPDF);
+
 module.exports = router;
