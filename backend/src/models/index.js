@@ -21,6 +21,10 @@ const User = require('./User')(sequelize);
 const Customer = require('./Customer')(sequelize);
 const CustomerPhoto = require('./CustomerPhoto')(sequelize);
 const CustomerNote = require('./CustomerNote')(sequelize);
+const Property = require('./Property')(sequelize);
+const PropertyPhoto = require('./PropertyPhoto')(sequelize);
+const PropertyNote = require('./PropertyNote')(sequelize);
+const PropertyServiceHistory = require('./PropertyServiceHistory')(sequelize);
 const Invoice = require('./Invoice')(sequelize);
 const InvoiceLineItem = require('./InvoiceLineItem')(sequelize);
 const Expense = require('./Expense')(sequelize);
@@ -55,12 +59,40 @@ CustomerPhoto.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
 Customer.hasMany(CustomerNote, { foreignKey: 'customerId', as: 'notes', onDelete: 'CASCADE' });
 CustomerNote.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
 
+// Customer - Property (One to Many)
+Customer.hasMany(Property, { foreignKey: 'customerId', as: 'properties', onDelete: 'CASCADE' });
+Property.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
+
+// Property - PropertyPhoto (One to Many)
+Property.hasMany(PropertyPhoto, { foreignKey: 'propertyId', as: 'photos', onDelete: 'CASCADE' });
+PropertyPhoto.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
+
+// Property - PropertyNote (One to Many)
+Property.hasMany(PropertyNote, { foreignKey: 'propertyId', as: 'notes', onDelete: 'CASCADE' });
+PropertyNote.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
+
+// Property - PropertyServiceHistory (One to Many)
+Property.hasMany(PropertyServiceHistory, { foreignKey: 'propertyId', as: 'serviceHistory', onDelete: 'CASCADE' });
+PropertyServiceHistory.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
+
+// Invoice - PropertyServiceHistory (One to Many)
+Invoice.hasMany(PropertyServiceHistory, { foreignKey: 'invoiceId', as: 'serviceHistory' });
+PropertyServiceHistory.belongsTo(Invoice, { foreignKey: 'invoiceId', as: 'invoice' });
+
+// Property - Invoice (One to Many) - Change from Customer to Property for invoices
+Property.hasMany(Invoice, { foreignKey: 'propertyId', as: 'invoices' });
+Invoice.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
+
 module.exports = {
   sequelize,
   User,
   Customer,
   CustomerPhoto,
   CustomerNote,
+  Property,
+  PropertyPhoto,
+  PropertyNote,
+  PropertyServiceHistory,
   Invoice,
   InvoiceLineItem,
   Expense,
