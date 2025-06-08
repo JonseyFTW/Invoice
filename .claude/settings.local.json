@@ -22,7 +22,8 @@
       "Bash(git push:*)",
       "Bash(cp:*)",
       "Bash(npm run health:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
