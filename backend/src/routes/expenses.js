@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { body } = require('express-validator');
 const expenseController = require('../controllers/expenseController');
 const auth = require('../middleware/auth');
@@ -10,10 +11,16 @@ const router = express.Router();
 // Apply auth middleware to all routes
 router.use(auth);
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), 'uploads', 'receipts');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/receipts/');
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

@@ -9,9 +9,15 @@ class GeminiService {
 
   async parseReceipt(imageBuffer) {
     try {
+      logger.info('Starting receipt parsing with Gemini AI');
+      
       if (!this.apiKey) {
+        logger.error('Gemini API key not configured');
         throw new Error('Gemini API key not configured');
       }
+      
+      logger.info(`API key exists: ${this.apiKey ? 'Yes' : 'No'}`);
+      logger.info(`Image buffer size: ${imageBuffer.length} bytes`);
 
       const base64Image = imageBuffer.toString('base64');
 
@@ -63,6 +69,7 @@ class GeminiService {
         }
       };
 
+      logger.info('Sending request to Gemini API...');
       const response = await axios.post(
         `${this.baseURL}?key=${this.apiKey}`,
         requestBody,
@@ -73,6 +80,8 @@ class GeminiService {
           timeout: 30000
         }
       );
+      
+      logger.info('Received response from Gemini API');
 
       if (!response.data.candidates?.[0]?.content?.parts?.[0]?.text) {
         throw new Error('Invalid response from Gemini API');

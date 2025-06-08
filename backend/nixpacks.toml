@@ -1,0 +1,15 @@
+providers = ["node"]
+
+[variables]
+NODE_VERSION = "20"
+NODE_ENV = "production"
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+
+[phases.build]
+cmd = "echo 'No build step needed'"
+
+[start]
+cmd = "npm start"
+
+[apt]
+packages = ["chromium", "chromium-sandbox"]

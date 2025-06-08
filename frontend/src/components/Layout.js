@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo.png';
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
@@ -39,6 +40,14 @@ function Layout({ children }) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200">
+            <img
+              className="h-10 w-auto mr-3"
+              src={logo}
+              alt="Company Logo"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
             <span className="text-xl font-bold text-gray-900">Invoice App</span>
           </div>
           
