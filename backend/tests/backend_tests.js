@@ -1,6 +1,8 @@
 const request = require('supertest');
 const app = require('../src/app');
-const { sequelize, User, Customer, Invoice, InvoiceLineItem } = require('../src/models');
+const {
+  sequelize, User, Customer, Invoice, InvoiceLineItem,
+} = require('../src/models');
 
 describe('Invoice API', () => {
   let authToken;
@@ -10,12 +12,12 @@ describe('Invoice API', () => {
   beforeAll(async () => {
     // Setup test database
     await sequelize.sync({ force: true });
-    
+
     // Create test user
     testUser = await User.create({
       username: 'testuser',
       email: 'test@example.com',
-      password: 'password123'
+      password: 'password123',
     });
 
     // Login to get auth token
@@ -23,7 +25,7 @@ describe('Invoice API', () => {
       .post('/api/auth/login')
       .send({
         email: 'test@example.com',
-        password: 'password123'
+        password: 'password123',
       });
 
     authToken = loginResponse.body.token;
@@ -33,7 +35,7 @@ describe('Invoice API', () => {
       name: 'Test Customer',
       email: 'customer@example.com',
       phone: '555-123-4567',
-      billingAddress: '123 Test St, Test City, TC 12345'
+      billingAddress: '123 Test St, Test City, TC 12345',
     });
   });
 
@@ -53,14 +55,14 @@ describe('Invoice API', () => {
           {
             description: 'Test Service',
             quantity: 1,
-            unitPrice: 100.00
+            unitPrice: 100.00,
           },
           {
             description: 'Additional Service',
             quantity: 2,
-            unitPrice: 50.00
-          }
-        ]
+            unitPrice: 50.00,
+          },
+        ],
       };
 
       const response = await request(app)
@@ -89,9 +91,9 @@ describe('Invoice API', () => {
       expect(response.body.errors).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            msg: 'Valid customer ID is required'
-          })
-        ])
+            msg: 'Valid customer ID is required',
+          }),
+        ]),
       );
     });
 
@@ -101,7 +103,7 @@ describe('Invoice API', () => {
         .send({
           customerId: testCustomer.id,
           invoiceDate: '2024-01-15',
-          dueDate: '2024-02-15'
+          dueDate: '2024-02-15',
         })
         .expect(401);
     });
@@ -114,16 +116,16 @@ describe('Invoice API', () => {
           customerId: testCustomer.id,
           invoiceDate: '2024-01-15',
           dueDate: '2024-02-15',
-          lineItems: []
+          lineItems: [],
         })
         .expect(400);
 
       expect(response.body.errors).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            msg: 'At least one line item is required'
-          })
-        ])
+            msg: 'At least one line item is required',
+          }),
+        ]),
       );
     });
   });
@@ -138,7 +140,7 @@ describe('Invoice API', () => {
         invoiceDate: '2024-01-15',
         dueDate: '2024-02-15',
         taxRate: 8.25,
-        status: 'Unpaid'
+        status: 'Unpaid',
       });
 
       await InvoiceLineItem.create({
@@ -146,7 +148,7 @@ describe('Invoice API', () => {
         description: 'Test Service',
         quantity: 1,
         unitPrice: 100.00,
-        lineTotal: 100.00
+        lineTotal: 100.00,
       });
     });
 
@@ -188,7 +190,7 @@ describe('Invoice API', () => {
           invoiceDate: '2024-01-15',
           dueDate: '2024-02-15',
           taxRate: 8.25,
-          status: 'Unpaid'
+          status: 'Unpaid',
         });
 
         await InvoiceLineItem.create({
@@ -196,7 +198,7 @@ describe('Invoice API', () => {
           description: 'Test Service',
           quantity: 1,
           unitPrice: 100.00,
-          lineTotal: 100.00
+          lineTotal: 100.00,
         });
       }
 
@@ -222,7 +224,7 @@ describe('Invoice API', () => {
         invoiceDate: '2024-01-15',
         dueDate: '2024-02-15',
         taxRate: 8.25,
-        status: 'Unpaid'
+        status: 'Unpaid',
       });
 
       await InvoiceLineItem.create({
@@ -230,7 +232,7 @@ describe('Invoice API', () => {
         description: 'Test Service',
         quantity: 1,
         unitPrice: 100.00,
-        lineTotal: 100.00
+        lineTotal: 100.00,
       });
     });
 
@@ -270,7 +272,7 @@ describe('Invoice API', () => {
         invoiceDate: '2024-01-15',
         dueDate: '2024-02-15',
         taxRate: 8.25,
-        status: 'Unpaid'
+        status: 'Unpaid',
       });
     });
 
@@ -299,7 +301,7 @@ describe('Invoice API', () => {
         invoiceDate: '2024-01-15',
         dueDate: '2024-02-15',
         taxRate: 8.25,
-        status: 'Unpaid'
+        status: 'Unpaid',
       });
     });
 
@@ -324,7 +326,7 @@ describe('Invoice API', () => {
         invoiceDate: '2024-01-15',
         dueDate: '2024-02-15',
         taxRate: 8.25,
-        status: 'Unpaid'
+        status: 'Unpaid',
       });
 
       await InvoiceLineItem.create({
@@ -332,7 +334,7 @@ describe('Invoice API', () => {
         description: 'Test Service',
         quantity: 1,
         unitPrice: 100.00,
-        lineTotal: 100.00
+        lineTotal: 100.00,
       });
     });
 

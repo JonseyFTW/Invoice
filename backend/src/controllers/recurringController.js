@@ -1,7 +1,11 @@
-const { RecurringTemplate, Customer, Invoice, InvoiceLineItem } = require('../models');
 const { validationResult } = require('express-validator');
+const {
+  addDays, addWeeks, addMonths, addYears,
+} = require('date-fns');
+const {
+  RecurringTemplate, Customer, Invoice, InvoiceLineItem,
+} = require('../models');
 const { generateInvoiceNumber } = require('../utils/invoiceUtils');
-const { addDays, addWeeks, addMonths, addYears } = require('date-fns');
 
 exports.getTemplates = async (req, res, next) => {
   try {
@@ -13,19 +17,19 @@ exports.getTemplates = async (req, res, next) => {
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'name', 'email']
-        }
+          attributes: ['id', 'name', 'email'],
+        },
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['nextRunDate', 'ASC']]
+      order: [['nextRunDate', 'ASC']],
     });
 
     res.json({
       templates,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
-      totalCount: count
+      totalCount: count,
     });
   } catch (error) {
     next(error);
@@ -38,9 +42,9 @@ exports.getTemplate = async (req, res, next) => {
       include: [
         {
           model: Customer,
-          as: 'customer'
-        }
-      ]
+          as: 'customer',
+        },
+      ],
     });
 
     if (!template) {
@@ -61,7 +65,7 @@ exports.createTemplate = async (req, res, next) => {
     }
 
     const { startDate, frequency, ...templateData } = req.body;
-    
+
     // Calculate next run date
     const nextRunDate = calculateNextRunDate(new Date(startDate), frequency);
 
@@ -69,11 +73,11 @@ exports.createTemplate = async (req, res, next) => {
       ...templateData,
       startDate,
       frequency,
-      nextRunDate
+      nextRunDate,
     });
 
     const completeTemplate = await RecurringTemplate.findByPk(template.id, {
-      include: [{ model: Customer, as: 'customer' }]
+      include: [{ model: Customer, as: 'customer' }],
     });
 
     res.status(201).json({ template: completeTemplate });
@@ -95,7 +99,7 @@ exports.updateTemplate = async (req, res, next) => {
     }
 
     const { startDate, frequency, ...updateData } = req.body;
-    
+
     // Recalculate next run date if frequency or start date changed
     if (startDate || frequency) {
       const newStartDate = startDate ? new Date(startDate) : template.startDate;
@@ -106,11 +110,11 @@ exports.updateTemplate = async (req, res, next) => {
     await template.update({
       ...updateData,
       ...(startDate && { startDate }),
-      ...(frequency && { frequency })
+      ...(frequency && { frequency }),
     });
 
     const updatedTemplate = await RecurringTemplate.findByPk(template.id, {
-      include: [{ model: Customer, as: 'customer' }]
+      include: [{ model: Customer, as: 'customer' }],
     });
 
     res.json({ template: updatedTemplate });
@@ -122,7 +126,7 @@ exports.updateTemplate = async (req, res, next) => {
 exports.deleteTemplate = async (req, res, next) => {
   try {
     const template = await RecurringTemplate.findByPk(req.params.id);
-    
+
     if (!template) {
       return res.status(404).json({ message: 'Template not found' });
     }
@@ -137,16 +141,16 @@ exports.deleteTemplate = async (req, res, next) => {
 exports.generateInvoice = async (req, res, next) => {
   try {
     const template = await RecurringTemplate.findByPk(req.params.id);
-    
+
     if (!template) {
       return res.status(404).json({ message: 'Template not found' });
     }
 
     const invoice = await generateInvoiceFromTemplate(template);
-    
-    res.status(201).json({ 
+
+    res.status(201).json({
       message: 'Invoice generated successfully',
-      invoice 
+      invoice,
     });
   } catch (error) {
     next(error);
@@ -156,7 +160,7 @@ exports.generateInvoice = async (req, res, next) => {
 // Helper functions
 function calculateNextRunDate(baseDate, frequency) {
   const date = new Date(baseDate);
-  
+
   switch (frequency) {
     case 'WEEKLY':
       return addWeeks(date, 1);
@@ -174,7 +178,7 @@ function calculateNextRunDate(baseDate, frequency) {
 async function generateInvoiceFromTemplate(template) {
   const { baseInvoiceData } = template;
   const invoiceNumber = await generateInvoiceNumber();
-  
+
   // Calculate due date (30 days from today by default)
   const invoiceDate = new Date();
   const dueDate = addDays(invoiceDate, 30);
@@ -187,14 +191,14 @@ async function generateInvoiceFromTemplate(template) {
     dueDate,
     taxRate: template.taxRate,
     notes: baseInvoiceData.notes || '',
-    recurringTemplateId: template.id
+    recurringTemplateId: template.id,
   });
 
   // Create line items
   if (baseInvoiceData.lineItems && baseInvoiceData.lineItems.length > 0) {
-    const lineItemsData = baseInvoiceData.lineItems.map(item => ({
+    const lineItemsData = baseInvoiceData.lineItems.map((item) => ({
       ...item,
-      invoiceId: invoice.id
+      invoiceId: invoice.id,
     }));
     await InvoiceLineItem.bulkCreate(lineItemsData);
   }
@@ -202,23 +206,23 @@ async function generateInvoiceFromTemplate(template) {
   // Update template
   const nextRunDate = calculateNextRunDate(template.nextRunDate, template.frequency);
   const completedOccurrences = template.completedOccurrences + 1;
-  
+
   // Check if we should deactivate the template
-  const shouldDeactivate = (template.endDate && nextRunDate > new Date(template.endDate)) ||
-                          (template.occurrences && completedOccurrences >= template.occurrences);
+  const shouldDeactivate = (template.endDate && nextRunDate > new Date(template.endDate))
+                          || (template.occurrences && completedOccurrences >= template.occurrences);
 
   await template.update({
     nextRunDate: shouldDeactivate ? null : nextRunDate,
     completedOccurrences,
-    isActive: !shouldDeactivate
+    isActive: !shouldDeactivate,
   });
 
   // Return complete invoice
   return await Invoice.findByPk(invoice.id, {
     include: [
       { model: Customer, as: 'customer' },
-      { model: InvoiceLineItem, as: 'lineItems' }
-    ]
+      { model: InvoiceLineItem, as: 'lineItems' },
+    ],
   });
 }
 

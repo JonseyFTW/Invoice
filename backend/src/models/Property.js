@@ -5,156 +5,156 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [1, 100]
-      }
+        len: [1, 100],
+      },
     },
     address: {
       type: DataTypes.TEXT,
       allowNull: false,
       validate: {
-        notEmpty: true
-      }
+        notEmpty: true,
+      },
     },
     city: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
     },
     state: {
       type: DataTypes.STRING(50),
-      allowNull: true
+      allowNull: true,
     },
     zipCode: {
       type: DataTypes.STRING(20),
-      allowNull: true
+      allowNull: true,
     },
     latitude: {
       type: DataTypes.DECIMAL(10, 8),
       allowNull: true,
       validate: {
         min: -90,
-        max: 90
-      }
+        max: 90,
+      },
     },
     longitude: {
       type: DataTypes.DECIMAL(11, 8),
       allowNull: true,
       validate: {
         min: -180,
-        max: 180
-      }
+        max: 180,
+      },
     },
     propertyType: {
       type: DataTypes.ENUM('residential', 'commercial', 'industrial', 'other'),
-      defaultValue: 'residential'
+      defaultValue: 'residential',
     },
     squareFootage: {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
-        min: 0
-      }
+        min: 0,
+      },
     },
     yearBuilt: {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
         min: 1800,
-        max: new Date().getFullYear() + 1
-      }
+        max: new Date().getFullYear() + 1,
+      },
     },
     bedrooms: {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
-        min: 0
-      }
+        min: 0,
+      },
     },
     bathrooms: {
       type: DataTypes.DECIMAL(3, 1),
       allowNull: true,
       validate: {
-        min: 0
-      }
+        min: 0,
+      },
     },
     floors: {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
-        min: 1
-      }
+        min: 1,
+      },
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     specialInstructions: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     accessNotes: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     gateCode: {
       type: DataTypes.STRING(50),
-      allowNull: true
+      allowNull: true,
     },
     keyLocation: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
     },
     contactOnSite: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
     },
     contactPhone: {
       type: DataTypes.STRING(20),
       allowNull: true,
       validate: {
-        is: /^[\d\s\-\+\(\)\.]*$/
-      }
+        is: /^[\d\s\-\+\(\)\.]*$/,
+      },
     },
     preferredServiceTime: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
     },
     lastServiceDate: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
     },
     nextServiceDate: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
     },
     isActive: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true
-    }
+      defaultValue: true,
+    },
   }, {
     indexes: [
       {
-        fields: ['customerId']
+        fields: ['customerId'],
       },
       {
-        fields: ['latitude', 'longitude']
+        fields: ['latitude', 'longitude'],
       },
       {
-        fields: ['propertyType']
+        fields: ['propertyType'],
       },
       {
-        fields: ['city', 'state']
+        fields: ['city', 'state'],
       },
       {
-        fields: ['isActive']
-      }
-    ]
+        fields: ['isActive'],
+      },
+    ],
   });
 
   return Property;

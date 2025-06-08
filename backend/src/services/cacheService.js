@@ -11,7 +11,7 @@ class CacheService {
   async connect() {
     try {
       const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      
+
       this.client = redis.createClient({
         url: redisUrl,
         retry_strategy: (options) => {
@@ -26,7 +26,7 @@ class CacheService {
             return undefined;
           }
           return Math.min(options.attempt * 100, 3000);
-        }
+        },
       });
 
       this.client.on('error', (err) => {
@@ -49,7 +49,6 @@ class CacheService {
       });
 
       await this.client.connect();
-      
     } catch (error) {
       logger.error('Failed to connect to Redis:', error);
       this.connected = false;
@@ -181,7 +180,7 @@ class CacheService {
 
     try {
       const values = await this.client.mGet(keys);
-      return values.map(value => value ? JSON.parse(value) : null);
+      return values.map((value) => (value ? JSON.parse(value) : null));
     } catch (error) {
       logger.error('Cache mget error:', error);
       return [];
@@ -195,12 +194,12 @@ class CacheService {
 
     try {
       const pipeline = this.client.multi();
-      
+
       for (const [key, value] of Object.entries(keyValuePairs)) {
         const serialized = JSON.stringify(value);
         pipeline.setEx(key, ttl, serialized);
       }
-      
+
       await pipeline.exec();
       return true;
     } catch (error) {
@@ -294,14 +293,14 @@ class CacheService {
       const now = Date.now();
       const window = Math.floor(now / windowMs);
       const rateKey = `rate:${key}:${window}`;
-      
+
       multi.incr(rateKey);
       multi.expire(rateKey, Math.ceil(windowMs / 1000));
-      
+
       const results = await multi.exec();
       const count = results[0][1];
       const reset = (window + 1) * windowMs;
-      
+
       return { count, reset };
     } catch (error) {
       logger.error('Rate limit error:', error);
@@ -319,7 +318,7 @@ class CacheService {
       const start = Date.now();
       await this.client.ping();
       const latency = Date.now() - start;
-      
+
       return { status: 'connected', latency };
     } catch (error) {
       return { status: 'error', latency: null, error: error.message };
@@ -335,11 +334,11 @@ class CacheService {
     try {
       const info = await this.client.info();
       const keyspace = await this.client.info('keyspace');
-      
+
       return {
         connected: this.connected,
         info,
-        keyspace
+        keyspace,
       };
     } catch (error) {
       logger.error('Error getting cache stats:', error);

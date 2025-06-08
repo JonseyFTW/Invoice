@@ -6,35 +6,35 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
     username: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
-        len: [3, 50]
-      }
+        len: [3, 50],
+      },
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true
-      }
+        isEmail: true,
+      },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [6, 255]
-      }
+        len: [6, 255],
+      },
     },
     isActive: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true
-    }
+      defaultValue: true,
+    },
   }, {
     hooks: {
       beforeCreate: async (user) => {
@@ -46,11 +46,11 @@ module.exports = (sequelize) => {
         if (user.changed('password')) {
           user.password = await bcrypt.hash(user.password, 10);
         }
-      }
-    }
+      },
+    },
   });
 
-  User.prototype.validatePassword = async function(password) {
+  User.prototype.validatePassword = async function (password) {
     return bcrypt.compare(password, this.password);
   };
 

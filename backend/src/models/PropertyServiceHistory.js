@@ -5,11 +5,11 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
     serviceDate: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: false,
     },
     serviceType: {
       type: DataTypes.ENUM(
@@ -21,101 +21,101 @@ module.exports = (sequelize) => {
         'consultation',
         'cleanup',
         'preparation',
-        'other'
+        'other',
       ),
-      allowNull: false
+      allowNull: false,
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: false,
     },
     roomsServiced: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     materialsUsed: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     timeSpent: {
       type: DataTypes.DECIMAL(4, 2),
       allowNull: true,
-      comment: 'Hours spent on service'
+      comment: 'Hours spent on service',
     },
     laborCost: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true
+      allowNull: true,
     },
     materialCost: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true
+      allowNull: true,
     },
     totalCost: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true
+      allowNull: true,
     },
     technicians: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: 'JSON array of technician names'
+      comment: 'JSON array of technician names',
     },
     beforePhotos: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: 'JSON array of photo IDs'
+      comment: 'JSON array of photo IDs',
     },
     afterPhotos: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: 'JSON array of photo IDs'
+      comment: 'JSON array of photo IDs',
     },
     notes: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     warrantyInfo: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     followUpRequired: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
     },
     followUpDate: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
     },
     customerSatisfaction: {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
         min: 1,
-        max: 5
+        max: 5,
       },
-      comment: '1-5 rating scale'
+      comment: '1-5 rating scale',
     },
     customerFeedback: {
       type: DataTypes.TEXT,
-      allowNull: true
-    }
+      allowNull: true,
+    },
   }, {
     indexes: [
       {
-        fields: ['propertyId']
+        fields: ['propertyId'],
       },
       {
-        fields: ['invoiceId']
+        fields: ['invoiceId'],
       },
       {
-        fields: ['serviceDate']
+        fields: ['serviceDate'],
       },
       {
-        fields: ['serviceType']
+        fields: ['serviceType'],
       },
       {
-        fields: ['followUpRequired', 'followUpDate']
-      }
-    ]
+        fields: ['followUpRequired', 'followUpDate'],
+      },
+    ],
   });
 
   return PropertyServiceHistory;

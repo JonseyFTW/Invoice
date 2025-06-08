@@ -5,34 +5,34 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [1, 100]
-      }
+        len: [1, 100],
+      },
     },
     billingAddress: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     phone: {
       type: DataTypes.STRING(20),
       allowNull: true,
       validate: {
-        is: /^[\d\s\-\+\(\)\.]*$/
-      }
+        is: /^[\d\s\-\+\(\)\.]*$/,
+      },
     },
     email: {
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        isEmail: true
-      }
-    }
+        isEmail: true,
+      },
+    },
   });
 
   return Customer;

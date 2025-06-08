@@ -31,7 +31,9 @@
       "Bash(npm run dev:*)",
       "Bash(docker logs:*)",
       "Bash(docker restart:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run migrate:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

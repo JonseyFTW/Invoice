@@ -23,27 +23,26 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     cb(null, `receipt-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
+  },
 });
 
 const upload = multer({
-  storage: storage,
+  storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|pdf/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
-    } else {
-      cb(new Error('Only images (JPEG, JPG, PNG) and PDF files are allowed'));
     }
-  }
+    cb(new Error('Only images (JPEG, JPG, PNG) and PDF files are allowed'));
+  },
 });
 
 // Validation rules
@@ -52,7 +51,7 @@ const expenseValidation = [
   body('description').trim().isLength({ min: 1 }).withMessage('Description is required'),
   body('amount').isFloat({ min: 0 }).withMessage('Amount must be 0 or greater'),
   body('expenseDate').isISO8601().toDate().withMessage('Valid expense date is required'),
-  body('invoiceId').optional().isUUID().withMessage('Valid invoice ID is required if provided')
+  body('invoiceId').optional().isUUID().withMessage('Valid invoice ID is required if provided'),
 ];
 
 // Routes

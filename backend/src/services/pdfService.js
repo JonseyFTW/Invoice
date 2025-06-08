@@ -6,15 +6,15 @@ class PDFService {
   async generateInvoicePDF(invoice) {
     const browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     try {
       const page = await browser.newPage();
-      
+
       const html = this.generateInvoiceHTML(invoice);
       await page.setContent(html, { waitUntil: 'networkidle0' });
-      
+
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
@@ -22,8 +22,8 @@ class PDFService {
           top: '20mm',
           right: '15mm',
           bottom: '20mm',
-          left: '15mm'
-        }
+          left: '15mm',
+        },
       });
 
       return pdfBuffer;
@@ -183,7 +183,7 @@ class PDFService {
                 </tr>
               </thead>
               <tbody>
-                ${invoice.lineItems.map(item => `
+                ${invoice.lineItems.map((item) => `
                   <tr>
                     <td>${item.description}</td>
                     <td class="number">${parseFloat(item.quantity).toFixed(2)}</td>

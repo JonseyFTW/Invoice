@@ -16,6 +16,7 @@ import InvoiceDetail from './pages/InvoiceDetail';
 import RecurringTemplates from './pages/RecurringTemplates';
 import Expenses from './pages/Expenses';
 import Reports from './pages/Reports';
+import DemoData from './pages/DemoData';
 import './App.css';
 
 function ProtectedRoute({ children }) {
@@ -56,6 +57,7 @@ function AppRoutes() {
           <Route path="/recurring" element={<RecurringTemplates />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/demo-data" element={<DemoData />} />
           <Route path="/login" element={<Navigate to="/" />} />
         </Routes>
       </Layout>

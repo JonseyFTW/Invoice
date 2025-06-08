@@ -15,8 +15,9 @@ const recurringValidation = [
   body('baseInvoiceData').isObject().withMessage('Invoice data is required'),
   body('frequency').isIn(['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).withMessage('Valid frequency is required'),
   body('startDate').isISO8601().toDate().withMessage('Valid start date is required'),
-  body('endDate').optional().isISO8601().toDate().withMessage('Valid end date is required if provided'),
-  body('occurrences').optional().isInt({ min: 1 }).withMessage('Occurrences must be at least 1 if provided')
+  body('endDate').optional().isISO8601().toDate()
+    .withMessage('Valid end date is required if provided'),
+  body('occurrences').optional().isInt({ min: 1 }).withMessage('Occurrences must be at least 1 if provided'),
 ];
 
 // Routes

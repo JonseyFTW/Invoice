@@ -1,4 +1,5 @@
 const express = require('express');
+
 const router = express.Router();
 const auth = require('../middleware/auth');
 const {
@@ -12,7 +13,7 @@ const {
   createPropertyNote,
   updatePropertyNote,
   deletePropertyNote,
-  createServiceHistory
+  createServiceHistory,
 } = require('../controllers/propertyController');
 
 // All routes require authentication

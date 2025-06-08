@@ -1,4 +1,6 @@
-const { Property, PropertyPhoto, PropertyNote, PropertyServiceHistory, Customer, Invoice } = require('../models');
+const {
+  Property, PropertyPhoto, PropertyNote, PropertyServiceHistory, Customer, Invoice,
+} = require('../models');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -19,25 +21,24 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(file.originalname)}`;
     cb(null, uniqueName);
-  }
+  },
 });
 
 const upload = multer({
-  storage: storage,
+  storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB
+    fileSize: 10 * 1024 * 1024, // 10MB
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
     }
-  }
+    cb(new Error('Only image files are allowed'));
+  },
 });
 
 // Get all properties for a customer
@@ -45,49 +46,49 @@ const getCustomerProperties = async (req, res) => {
   try {
     const { customerId } = req.params;
     const { page = 1, limit = 10, search = '' } = req.query;
-    
+
     const offset = (page - 1) * limit;
-    
+
     const whereCondition = {
       customerId,
       ...(search && {
         name: {
-          [require('sequelize').Op.iLike]: `%${search}%`
-        }
-      })
+          [require('sequelize').Op.iLike]: `%${search}%`,
+        },
+      }),
     };
-    
+
     const { count, rows: properties } = await Property.findAndCountAll({
       where: whereCondition,
       include: [
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'name', 'email', 'phone']
+          attributes: ['id', 'name', 'email', 'phone'],
         },
         {
           model: PropertyPhoto,
           as: 'photos',
           attributes: ['id', 'filename', 'category', 'description', 'uploadedAt'],
-          limit: 3 // Just show a preview
+          limit: 3, // Just show a preview
         },
         {
           model: PropertyNote,
           as: 'notes',
           attributes: ['id', 'title', 'category', 'priority'],
-          limit: 3 // Just show a preview
-        }
+          limit: 3, // Just show a preview
+        },
       ],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
-      offset: offset
+      offset,
     });
-    
+
     res.json({
       properties,
       totalCount: count,
       totalPages: Math.ceil(count / limit),
-      currentPage: parseInt(page)
+      currentPage: parseInt(page),
     });
   } catch (error) {
     logger.error('Error fetching customer properties:', error);
@@ -99,23 +100,23 @@ const getCustomerProperties = async (req, res) => {
 const getProperty = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const property = await Property.findByPk(id, {
       include: [
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'name', 'email', 'phone']
+          attributes: ['id', 'name', 'email', 'phone'],
         },
         {
           model: PropertyPhoto,
           as: 'photos',
-          order: [['uploadedAt', 'DESC']]
+          order: [['uploadedAt', 'DESC']],
         },
         {
           model: PropertyNote,
           as: 'notes',
-          order: [['createdAt', 'DESC']]
+          order: [['createdAt', 'DESC']],
         },
         {
           model: PropertyServiceHistory,
@@ -124,25 +125,25 @@ const getProperty = async (req, res) => {
             {
               model: Invoice,
               as: 'invoice',
-              attributes: ['id', 'invoiceNumber', 'status', 'invoiceDate']
-            }
+              attributes: ['id', 'invoiceNumber', 'status', 'invoiceDate'],
+            },
           ],
-          order: [['serviceDate', 'DESC']]
+          order: [['serviceDate', 'DESC']],
         },
         {
           model: Invoice,
           as: 'invoices',
           attributes: ['id', 'invoiceNumber', 'status', 'invoiceDate', 'dueDate'],
           order: [['invoiceDate', 'DESC']],
-          limit: 10
-        }
-      ]
+          limit: 10,
+        },
+      ],
     });
-    
+
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
-    
+
     res.json({ property });
   } catch (error) {
     logger.error('Error fetching property:', error);
@@ -155,26 +156,26 @@ const createProperty = async (req, res) => {
   try {
     const { customerId } = req.params;
     const propertyData = { ...req.body, customerId };
-    
+
     // Validate customer exists
     const customer = await Customer.findByPk(customerId);
     if (!customer) {
       return res.status(404).json({ message: 'Customer not found' });
     }
-    
+
     const property = await Property.create(propertyData);
-    
+
     // Fetch the created property with associations
     const createdProperty = await Property.findByPk(property.id, {
       include: [
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'name', 'email', 'phone']
-        }
-      ]
+          attributes: ['id', 'name', 'email', 'phone'],
+        },
+      ],
     });
-    
+
     logger.info(`Property created: ${property.id}`);
     res.status(201).json({ property: createdProperty });
   } catch (error) {
@@ -187,25 +188,25 @@ const createProperty = async (req, res) => {
 const updateProperty = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const property = await Property.findByPk(id);
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
-    
+
     await property.update(req.body);
-    
+
     // Fetch updated property with associations
     const updatedProperty = await Property.findByPk(id, {
       include: [
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'name', 'email', 'phone']
-        }
-      ]
+          attributes: ['id', 'name', 'email', 'phone'],
+        },
+      ],
     });
-    
+
     logger.info(`Property updated: ${id}`);
     res.json({ property: updatedProperty });
   } catch (error) {
@@ -218,22 +219,22 @@ const updateProperty = async (req, res) => {
 const deleteProperty = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const property = await Property.findByPk(id);
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
-    
+
     // Check if property has invoices
     const invoiceCount = await Invoice.count({ where: { propertyId: id } });
     if (invoiceCount > 0) {
-      return res.status(400).json({ 
-        message: 'Cannot delete property with existing invoices' 
+      return res.status(400).json({
+        message: 'Cannot delete property with existing invoices',
       });
     }
-    
+
     await property.destroy();
-    
+
     logger.info(`Property deleted: ${id}`);
     res.json({ message: 'Property deleted successfully' });
   } catch (error) {
@@ -246,17 +247,19 @@ const deleteProperty = async (req, res) => {
 const uploadPropertyPhoto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { category = 'other', description = '', room = '', floor } = req.body;
-    
+    const {
+      category = 'other', description = '', room = '', floor,
+    } = req.body;
+
     if (!req.file) {
       return res.status(400).json({ message: 'No photo file provided' });
     }
-    
+
     const property = await Property.findByPk(id);
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
-    
+
     const photo = await PropertyPhoto.create({
       propertyId: id,
       filename: req.file.filename,
@@ -266,9 +269,9 @@ const uploadPropertyPhoto = async (req, res) => {
       category,
       description,
       room: room || null,
-      floor: floor ? parseInt(floor) : null
+      floor: floor ? parseInt(floor) : null,
     });
-    
+
     logger.info(`Property photo uploaded: ${photo.id}`);
     res.status(201).json({ photo });
   } catch (error) {
@@ -281,12 +284,12 @@ const uploadPropertyPhoto = async (req, res) => {
 const deletePropertyPhoto = async (req, res) => {
   try {
     const { photoId } = req.params;
-    
+
     const photo = await PropertyPhoto.findByPk(photoId);
     if (!photo) {
       return res.status(404).json({ message: 'Photo not found' });
     }
-    
+
     // Delete file from filesystem
     const filePath = path.join(__dirname, '../../uploads/property_photos', photo.filename);
     try {
@@ -294,9 +297,9 @@ const deletePropertyPhoto = async (req, res) => {
     } catch (error) {
       logger.warn(`Failed to delete photo file: ${filePath}`, error);
     }
-    
+
     await photo.destroy();
-    
+
     logger.info(`Property photo deleted: ${photoId}`);
     res.json({ message: 'Photo deleted successfully' });
   } catch (error) {
@@ -310,14 +313,14 @@ const createPropertyNote = async (req, res) => {
   try {
     const { id } = req.params;
     const noteData = { ...req.body, propertyId: id };
-    
+
     const property = await Property.findByPk(id);
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
-    
+
     const note = await PropertyNote.create(noteData);
-    
+
     logger.info(`Property note created: ${note.id}`);
     res.status(201).json({ note });
   } catch (error) {
@@ -330,14 +333,14 @@ const createPropertyNote = async (req, res) => {
 const updatePropertyNote = async (req, res) => {
   try {
     const { noteId } = req.params;
-    
+
     const note = await PropertyNote.findByPk(noteId);
     if (!note) {
       return res.status(404).json({ message: 'Note not found' });
     }
-    
+
     await note.update(req.body);
-    
+
     logger.info(`Property note updated: ${noteId}`);
     res.json({ note });
   } catch (error) {
@@ -350,14 +353,14 @@ const updatePropertyNote = async (req, res) => {
 const deletePropertyNote = async (req, res) => {
   try {
     const { noteId } = req.params;
-    
+
     const note = await PropertyNote.findByPk(noteId);
     if (!note) {
       return res.status(404).json({ message: 'Note not found' });
     }
-    
+
     await note.destroy();
-    
+
     logger.info(`Property note deleted: ${noteId}`);
     res.json({ message: 'Note deleted successfully' });
   } catch (error) {
@@ -371,17 +374,17 @@ const createServiceHistory = async (req, res) => {
   try {
     const { id } = req.params;
     const serviceData = { ...req.body, propertyId: id };
-    
+
     const property = await Property.findByPk(id);
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
-    
+
     const service = await PropertyServiceHistory.create(serviceData);
-    
+
     // Update property's last service date
     await property.update({ lastServiceDate: serviceData.serviceDate });
-    
+
     logger.info(`Service history created: ${service.id}`);
     res.status(201).json({ service });
   } catch (error) {
@@ -401,5 +404,5 @@ module.exports = {
   createPropertyNote,
   updatePropertyNote,
   deletePropertyNote,
-  createServiceHistory
+  createServiceHistory,
 };

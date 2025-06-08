@@ -1,4 +1,6 @@
-const { Customer, CustomerPhoto, CustomerNote, Property } = require('../models');
+const {
+  Customer, CustomerPhoto, CustomerNote, Property,
+} = require('../models');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 const fs = require('fs').promises;
@@ -13,7 +15,7 @@ exports.getCustomers = async (req, res, next) => {
     if (search) {
       whereClause[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
-        { email: { [Op.iLike]: `%${search}%` } }
+        { email: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
@@ -21,14 +23,14 @@ exports.getCustomers = async (req, res, next) => {
       where: whereClause,
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['name', 'ASC']]
+      order: [['name', 'ASC']],
     });
 
     res.json({
       customers,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
-      totalCount: count
+      totalCount: count,
     });
   } catch (error) {
     next(error);
@@ -42,18 +44,18 @@ exports.getCustomer = async (req, res, next) => {
         {
           model: CustomerPhoto,
           as: 'photos',
-          order: [['uploadedAt', 'DESC']]
+          order: [['uploadedAt', 'DESC']],
         },
         {
           model: CustomerNote,
           as: 'notes',
           where: { isArchived: false },
           required: false,
-          order: [['priority', 'DESC'], ['createdAt', 'DESC']]
-        }
-      ]
+          order: [['priority', 'DESC'], ['createdAt', 'DESC']],
+        },
+      ],
     });
-    
+
     if (!customer) {
       return res.status(404).json({ message: 'Customer not found' });
     }
@@ -86,7 +88,7 @@ exports.updateCustomer = async (req, res, next) => {
     }
 
     const customer = await Customer.findByPk(req.params.id);
-    
+
     if (!customer) {
       return res.status(404).json({ message: 'Customer not found' });
     }
@@ -101,9 +103,9 @@ exports.updateCustomer = async (req, res, next) => {
 exports.deleteCustomer = async (req, res, next) => {
   try {
     const customer = await Customer.findByPk(req.params.id, {
-      include: [{ model: CustomerPhoto, as: 'photos' }]
+      include: [{ model: CustomerPhoto, as: 'photos' }],
     });
-    
+
     if (!customer) {
       return res.status(404).json({ message: 'Customer not found' });
     }
@@ -151,7 +153,7 @@ exports.uploadCustomerPhoto = async (req, res, next) => {
       mimeType: req.file.mimetype,
       fileSize: req.file.size,
       description,
-      category
+      category,
     });
 
     res.status(201).json({ photo });
@@ -176,7 +178,7 @@ exports.getCustomerPhotos = async (req, res, next) => {
 
     const photos = await CustomerPhoto.findAll({
       where: whereClause,
-      order: [['uploadedAt', 'DESC']]
+      order: [['uploadedAt', 'DESC']],
     });
 
     res.json({ photos });
@@ -212,7 +214,9 @@ exports.deleteCustomerPhoto = async (req, res, next) => {
 exports.createCustomerNote = async (req, res, next) => {
   try {
     const { id: customerId } = req.params;
-    const { title, content, category = 'other', priority = 'medium' } = req.body;
+    const {
+      title, content, category = 'other', priority = 'medium',
+    } = req.body;
 
     const customer = await Customer.findByPk(customerId);
     if (!customer) {
@@ -224,7 +228,7 @@ exports.createCustomerNote = async (req, res, next) => {
       title,
       content,
       category,
-      priority
+      priority,
     });
 
     res.status(201).json({ note });
@@ -248,7 +252,7 @@ exports.getCustomerNotes = async (req, res, next) => {
 
     const notes = await CustomerNote.findAll({
       where: whereClause,
-      order: [['priority', 'DESC'], ['createdAt', 'DESC']]
+      order: [['priority', 'DESC'], ['createdAt', 'DESC']],
     });
 
     res.json({ notes });
@@ -260,7 +264,9 @@ exports.getCustomerNotes = async (req, res, next) => {
 exports.updateCustomerNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const { title, content, category, priority, isArchived } = req.body;
+    const {
+      title, content, category, priority, isArchived,
+    } = req.body;
 
     const note = await CustomerNote.findByPk(noteId);
     if (!note) {
@@ -272,7 +278,7 @@ exports.updateCustomerNote = async (req, res, next) => {
       content,
       category,
       priority,
-      isArchived
+      isArchived,
     });
 
     res.json({ note });
@@ -307,12 +313,12 @@ exports.getCustomerProperties = async (req, res, next) => {
     }
 
     const properties = await Property.findAll({
-      where: { 
+      where: {
         customerId,
-        isActive: true 
+        isActive: true,
       },
       attributes: ['id', 'name', 'address', 'city', 'state', 'propertyType'],
-      order: [['name', 'ASC']]
+      order: [['name', 'ASC']],
     });
 
     res.json({ properties });

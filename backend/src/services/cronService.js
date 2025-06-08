@@ -1,9 +1,13 @@
 const cron = require('node-cron');
-const { RecurringTemplate, Invoice, InvoiceLineItem, Customer } = require('../models');
+const { Op } = require('sequelize');
+const {
+  addDays, addWeeks, addMonths, addYears,
+} = require('date-fns');
+const {
+  RecurringTemplate, Invoice, InvoiceLineItem, Customer,
+} = require('../models');
 const { updateOverdueInvoices, generateInvoiceNumber } = require('../utils/invoiceUtils');
 const logger = require('../utils/logger');
-const { Op } = require('sequelize');
-const { addDays, addWeeks, addMonths, addYears } = require('date-fns');
 
 class CronService {
   static start() {
@@ -45,15 +49,15 @@ class CronService {
         where: {
           isActive: true,
           nextRunDate: {
-            [Op.lte]: today
-          }
+            [Op.lte]: today,
+          },
         },
         include: [
           {
             model: Customer,
-            as: 'customer'
-          }
-        ]
+            as: 'customer',
+          },
+        ],
       });
 
       logger.info(`Found ${templates.length} templates ready for generation`);
@@ -74,7 +78,7 @@ class CronService {
   static async generateInvoiceFromTemplate(template) {
     const { baseInvoiceData } = template;
     const invoiceNumber = await generateInvoiceNumber();
-    
+
     // Calculate due date (30 days from today by default)
     const invoiceDate = new Date();
     const dueDate = addDays(invoiceDate, baseInvoiceData.paymentTerms || 30);
@@ -87,17 +91,17 @@ class CronService {
       dueDate,
       taxRate: template.taxRate,
       notes: baseInvoiceData.notes || `Auto-generated from template: ${template.templateName}`,
-      recurringTemplateId: template.id
+      recurringTemplateId: template.id,
     });
 
     // Create line items
     if (baseInvoiceData.lineItems && baseInvoiceData.lineItems.length > 0) {
-      const lineItemsData = baseInvoiceData.lineItems.map(item => ({
+      const lineItemsData = baseInvoiceData.lineItems.map((item) => ({
         invoiceId: invoice.id,
         description: item.description,
         quantity: parseFloat(item.quantity),
         unitPrice: parseFloat(item.unitPrice),
-        lineTotal: parseFloat(item.quantity) * parseFloat(item.unitPrice)
+        lineTotal: parseFloat(item.quantity) * parseFloat(item.unitPrice),
       }));
       await InvoiceLineItem.bulkCreate(lineItemsData);
     }
@@ -105,29 +109,29 @@ class CronService {
     // Update template for next run
     const nextRunDate = this.calculateNextRunDate(template.nextRunDate, template.frequency);
     const completedOccurrences = template.completedOccurrences + 1;
-    
+
     // Check if we should deactivate the template
-    const shouldDeactivate = (template.endDate && nextRunDate > new Date(template.endDate)) ||
-                            (template.occurrences && completedOccurrences >= template.occurrences);
+    const shouldDeactivate = (template.endDate && nextRunDate > new Date(template.endDate))
+                            || (template.occurrences && completedOccurrences >= template.occurrences);
 
     await template.update({
       nextRunDate: shouldDeactivate ? null : nextRunDate,
       completedOccurrences,
-      isActive: !shouldDeactivate
+      isActive: !shouldDeactivate,
     });
 
     // Return complete invoice
     return await Invoice.findByPk(invoice.id, {
       include: [
         { model: Customer, as: 'customer' },
-        { model: InvoiceLineItem, as: 'lineItems' }
-      ]
+        { model: InvoiceLineItem, as: 'lineItems' },
+      ],
     });
   }
 
   static calculateNextRunDate(baseDate, frequency) {
     const date = new Date(baseDate);
-    
+
     switch (frequency) {
       case 'WEEKLY':
         return addWeeks(date, 1);

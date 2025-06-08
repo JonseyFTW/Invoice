@@ -1,5 +1,7 @@
-const { sequelize, User, Customer, Invoice, InvoiceLineItem, Expense, RecurringTemplate } = require('../src/models');
 const jwt = require('jsonwebtoken');
+const {
+  sequelize, User, Customer, Invoice, InvoiceLineItem, Expense, RecurringTemplate,
+} = require('../src/models');
 
 // Global test setup
 beforeAll(async () => {
@@ -7,7 +9,7 @@ beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   process.env.JWT_SECRET = 'test_jwt_secret_for_testing_only';
   process.env.DB_NAME = 'test_db';
-  
+
   // Sync database for tests
   await sequelize.sync({ force: true });
 });
@@ -35,12 +37,12 @@ class TestUtils {
     const defaultUser = {
       username: 'testuser',
       email: 'test@example.com',
-      password: 'password123'
+      password: 'password123',
     };
 
     return await User.create({
       ...defaultUser,
-      ...userData
+      ...userData,
     });
   }
 
@@ -50,12 +52,12 @@ class TestUtils {
       name: 'Test Customer',
       email: 'customer@example.com',
       phone: '555-123-4567',
-      billingAddress: '123 Test St, Test City, TC 12345'
+      billingAddress: '123 Test St, Test City, TC 12345',
     };
 
     return await Customer.create({
       ...defaultCustomer,
-      ...customerData
+      ...customerData,
     });
   }
 
@@ -67,12 +69,12 @@ class TestUtils {
       invoiceDate: '2024-01-15',
       dueDate: '2024-02-15',
       taxRate: 8.25,
-      status: 'Unpaid'
+      status: 'Unpaid',
     };
 
     return await Invoice.create({
       ...defaultInvoice,
-      ...invoiceData
+      ...invoiceData,
     });
   }
 
@@ -83,12 +85,12 @@ class TestUtils {
       description: 'Test Service',
       quantity: 1,
       unitPrice: 100.00,
-      lineTotal: 100.00
+      lineTotal: 100.00,
     };
 
     return await InvoiceLineItem.create({
       ...defaultLineItem,
-      ...lineItemData
+      ...lineItemData,
     });
   }
 
@@ -98,12 +100,12 @@ class TestUtils {
       vendor: 'Test Vendor',
       description: 'Test expense description',
       amount: 50.00,
-      expenseDate: '2024-01-15'
+      expenseDate: '2024-01-15',
     };
 
     return await Expense.create({
       ...defaultExpense,
-      ...expenseData
+      ...expenseData,
     });
   }
 
@@ -117,22 +119,22 @@ class TestUtils {
           {
             description: 'Monthly Service',
             quantity: 1,
-            unitPrice: 100.00
-          }
+            unitPrice: 100.00,
+          },
         ],
-        notes: 'Recurring monthly service'
+        notes: 'Recurring monthly service',
       },
       taxRate: 8.25,
       frequency: 'MONTHLY',
       startDate: '2024-01-01',
       nextRunDate: '2024-02-01',
       isActive: true,
-      completedOccurrences: 0
+      completedOccurrences: 0,
     };
 
     return await RecurringTemplate.create({
       ...defaultTemplate,
-      ...templateData
+      ...templateData,
     });
   }
 
@@ -151,10 +153,10 @@ class TestUtils {
   // Create complete test invoice with line items
   static async createCompleteTestInvoice(customerId, options = {}) {
     const invoice = await this.createTestInvoice(customerId, options.invoiceData);
-    
+
     const lineItems = options.lineItems || [
       { description: 'Service 1', quantity: 1, unitPrice: 100.00 },
-      { description: 'Service 2', quantity: 2, unitPrice: 50.00 }
+      { description: 'Service 2', quantity: 2, unitPrice: 50.00 },
     ];
 
     const createdLineItems = [];
@@ -168,7 +170,7 @@ class TestUtils {
 
   // Wait for async operations
   static async wait(ms = 100) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // Mock external services
@@ -190,9 +192,9 @@ class TestUtils {
           description: 'Test Item',
           quantity: 1,
           unitPrice: 25.99,
-          lineTotal: 25.99
-        }
-      ]
+          lineTotal: 25.99,
+        },
+      ],
     });
     jest.spyOn(geminiService, 'isAvailable').mockResolvedValue(true);
     return geminiService;
@@ -246,7 +248,7 @@ class TestUtils {
         name: `Customer ${i}`,
         email: `customer${i}@example.com`,
         phone: `555-000-000${i}`,
-        billingAddress: `${i}00 Test St, Test City, TC 1234${i}`
+        billingAddress: `${i}00 Test St, Test City, TC 1234${i}`,
       });
     }
     return customers;
@@ -261,7 +263,7 @@ class TestUtils {
         invoiceDate: `2024-01-${i.toString().padStart(2, '0')}`,
         dueDate: `2024-02-${i.toString().padStart(2, '0')}`,
         taxRate: 8.25,
-        status: i % 2 === 0 ? 'Paid' : 'Unpaid'
+        status: i % 2 === 0 ? 'Paid' : 'Unpaid',
       });
     }
     return invoices;
@@ -274,7 +276,7 @@ class TestUtils {
     const end = Date.now();
     return {
       result,
-      executionTime: end - start
+      executionTime: end - start,
     };
   }
 
@@ -285,7 +287,7 @@ class TestUtils {
       rss: Math.round(usage.rss / 1024 / 1024),
       heapUsed: Math.round(usage.heapUsed / 1024 / 1024),
       heapTotal: Math.round(usage.heapTotal / 1024 / 1024),
-      external: Math.round(usage.external / 1024 / 1024)
+      external: Math.round(usage.external / 1024 / 1024),
     };
   }
 
@@ -300,7 +302,7 @@ class TestUtils {
       filename: `mock-${Date.now()}-${filename}`,
       path: `/tmp/uploads/mock-${Date.now()}-${filename}`,
       size,
-      buffer: Buffer.alloc(size)
+      buffer: Buffer.alloc(size),
     };
   }
 
@@ -309,10 +311,10 @@ class TestUtils {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    
+
     return {
       startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0]
+      endDate: endDate.toISOString().split('T')[0],
     };
   }
 
@@ -369,24 +371,24 @@ class TestUtils {
     for (let i = 0; i < maxRequests + 1; i++) {
       promises.push(request());
     }
-    
+
     const responses = await Promise.all(promises);
-    
+
     // Check that the last request was rate limited
     const lastResponse = responses[responses.length - 1];
     expect(lastResponse.status).toBe(429);
-    
+
     return responses;
   }
 
   // Database constraint testing
   static async testUniqueConstraint(model, field, value) {
     const data = { [field]: value };
-    
+
     // First create should succeed
     const first = await model.create(data);
     expect(first).toBeDefined();
-    
+
     // Second create should fail
     await expect(model.create(data)).rejects.toThrow();
   }
@@ -397,7 +399,7 @@ class TestUtils {
     try {
       const files = await fs.readdir(directory);
       await Promise.all(
-        files.map(file => fs.unlink(`${directory}/${file}`))
+        files.map((file) => fs.unlink(`${directory}/${file}`)),
       );
     } catch (error) {
       // Directory might not exist, ignore

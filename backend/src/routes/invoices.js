@@ -17,7 +17,7 @@ const invoiceValidation = [
   body('lineItems').isArray({ min: 1 }).withMessage('At least one line item is required'),
   body('lineItems.*.description').trim().isLength({ min: 1 }).withMessage('Line item description is required'),
   body('lineItems.*.quantity').isFloat({ gt: 0 }).withMessage('Quantity must be greater than 0'),
-  body('lineItems.*.unitPrice').isFloat({ min: 0 }).withMessage('Unit price must be 0 or greater')
+  body('lineItems.*.unitPrice').isFloat({ min: 0 }).withMessage('Unit price must be 0 or greater'),
 ];
 
 // Routes
