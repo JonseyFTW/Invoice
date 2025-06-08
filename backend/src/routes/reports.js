@@ -12,4 +12,12 @@ router.get('/summary', reportController.getSummary);
 router.get('/monthly', reportController.getMonthlyData);
 router.get('/top-customers', reportController.getTopCustomers);
 
+// Enhanced Analytics Routes
+router.get('/revenue-analytics', reportController.getRevenueAnalytics);
+router.get('/customer-profitability', reportController.getCustomerProfitability);
+router.get('/invoice-aging', reportController.getInvoiceAging);
+router.get('/geographic-distribution', reportController.getGeographicDistribution);
+router.get('/service-metrics', reportController.getServiceMetrics);
+router.get('/financial-health', reportController.getFinancialHealth);
+
 module.exports = router;
