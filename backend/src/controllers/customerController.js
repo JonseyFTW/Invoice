@@ -305,7 +305,7 @@ exports.deleteCustomerNote = async (req, res, next) => {
 
 exports.getCustomerProperties = async (req, res, next) => {
   try {
-    const { customerId } = req.params;
+    const { id: customerId } = req.params;
 
     const customer = await Customer.findByPk(customerId);
     if (!customer) {
