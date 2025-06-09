@@ -42,7 +42,7 @@ exports.getInvoices = async (req, res, next) => {
         {
           model: InvoicePhoto,
           as: 'photos',
-          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt', 'url'],
+          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt'],
           order: [['uploadedAt', 'DESC']],
         },
       ],
@@ -52,12 +52,22 @@ exports.getInvoices = async (req, res, next) => {
     });
 
     // Add calculated totals
-    const invoicesWithTotals = invoices.map((invoice) => ({
-      ...invoice.toJSON(),
-      subtotal: invoice.getSubtotal(),
-      taxAmount: invoice.getTaxAmount(),
-      grandTotal: invoice.getGrandTotal(),
-    }));
+    const invoicesWithTotals = invoices.map((invoice) => {
+      const invoiceJson = invoice.toJSON();
+      // Ensure photo URLs are included
+      if (invoiceJson.photos) {
+        invoiceJson.photos = invoiceJson.photos.map(photo => ({
+          ...photo,
+          url: invoice.photos.find(p => p.id === photo.id)?.url
+        }));
+      }
+      return {
+        ...invoiceJson,
+        subtotal: invoice.getSubtotal(),
+        taxAmount: invoice.getTaxAmount(),
+        grandTotal: invoice.getGrandTotal(),
+      };
+    });
 
     res.json({
       invoices: invoicesWithTotals,
@@ -91,7 +101,7 @@ exports.getInvoice = async (req, res, next) => {
         {
           model: InvoicePhoto,
           as: 'photos',
-          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt', 'url'],
+          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt'],
           order: [['uploadedAt', 'DESC']],
         },
       ],
@@ -101,8 +111,17 @@ exports.getInvoice = async (req, res, next) => {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
+    const invoiceJson = invoice.toJSON();
+    // Ensure photo URLs are included
+    if (invoiceJson.photos) {
+      invoiceJson.photos = invoiceJson.photos.map(photo => ({
+        ...photo,
+        url: invoice.photos.find(p => p.id === photo.id)?.url
+      }));
+    }
+    
     const invoiceWithTotals = {
-      ...invoice.toJSON(),
+      ...invoiceJson,
       subtotal: invoice.getSubtotal(),
       taxAmount: invoice.getTaxAmount(),
       grandTotal: invoice.getGrandTotal(),
@@ -401,11 +420,17 @@ exports.getInvoicePhotos = async (req, res, next) => {
 
     const photos = await InvoicePhoto.findAll({
       where: whereClause,
-      attributes: ['id', 'filename', 'description', 'category', 'uploadedAt', 'url'],
+      attributes: ['id', 'filename', 'description', 'category', 'uploadedAt'],
       order: [['uploadedAt', 'DESC']],
     });
 
-    res.json({ photos });
+    // Ensure URLs are included
+    const photosWithUrls = photos.map(photo => ({
+      ...photo.toJSON(),
+      url: photo.url
+    }));
+    
+    res.json({ photos: photosWithUrls });
   } catch (error) {
     next(error);
   }
