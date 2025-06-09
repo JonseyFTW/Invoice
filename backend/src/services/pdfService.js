@@ -5,28 +5,49 @@ const fs = require('fs').promises;
 class PDFService {
   async getLogoBase64() {
     try {
-      const logoPath = path.join(__dirname, '../../uploads/logo.png');
-      const fallbackPath = path.join(__dirname, '../../../frontend/public/logo.png');
+      // Try multiple possible logo locations for different environments
+      const possiblePaths = [
+        // Railway production paths
+        '/app/uploads/logo.png',
+        '/app/backend/uploads/logo.png',
+        '/workspace/uploads/logo.png',
+        '/workspace/backend/uploads/logo.png',
+        // Development/local paths
+        path.join(__dirname, '../../uploads/logo.png'),
+        path.join(__dirname, '../../../frontend/public/logo.png'),
+        path.join(__dirname, '../../../frontend/src/assets/logo.png'),
+        // Relative to project root
+        path.join(process.cwd(), 'uploads/logo.png'),
+        path.join(process.cwd(), 'backend/uploads/logo.png'),
+        path.join(process.cwd(), 'frontend/public/logo.png'),
+        path.join(process.cwd(), 'frontend/src/assets/logo.png')
+      ];
       
-      console.log('Attempting to load logo from:', logoPath);
+      console.log('Current working directory:', process.cwd());
+      console.log('__dirname:', __dirname);
       
       let logoBuffer;
-      try {
-        logoBuffer = await fs.readFile(logoPath);
-        console.log('✅ Logo loaded successfully from uploads directory');
-      } catch (uploadError) {
-        console.log('❌ Logo not found in uploads, trying fallback:', fallbackPath);
+      let successfulPath = null;
+      
+      for (const logoPath of possiblePaths) {
         try {
-          logoBuffer = await fs.readFile(fallbackPath);
-          console.log('✅ Logo loaded successfully from fallback location');
-        } catch (fallbackError) {
-          console.log('❌ Fallback logo also not found:', fallbackError.message);
-          throw fallbackError;
+          console.log('Trying logo path:', logoPath);
+          logoBuffer = await fs.readFile(logoPath);
+          successfulPath = logoPath;
+          console.log('✅ Logo loaded successfully from:', logoPath);
+          break;
+        } catch (error) {
+          console.log('❌ Logo not found at:', logoPath);
         }
       }
       
+      if (!logoBuffer) {
+        console.log('❌ Logo not found in any of the attempted paths');
+        return null;
+      }
+      
       const base64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
-      console.log('✅ Logo converted to base64, length:', base64.length);
+      console.log('✅ Logo converted to base64, length:', base64.length, 'from path:', successfulPath);
       return base64;
     } catch (error) {
       console.log('❌ Logo loading failed completely:', error.message);
