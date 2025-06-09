@@ -19,24 +19,10 @@ import Reports from './pages/Reports';
 import DemoData from './pages/DemoData';
 import './App.css';
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-  
-  return user ? children : <Navigate to="/login" />;
-}
-
 function AppRoutes() {
   const { user } = useAuth();
   
-  console.log('AppRoutes - Current user:', user);
+  // console.log('AppRoutes - Current user:', user);
 
   if (user) {
     return (

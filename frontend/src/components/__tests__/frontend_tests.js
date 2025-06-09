@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import Dashboard from '../Dashboard';
+import Dashboard from '../../pages/Dashboard';
 import { AuthProvider } from '../../contexts/AuthContext';
 import api from '../../services/api';
 
@@ -104,10 +104,11 @@ describe('Dashboard Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('$50,000')).toBeInTheDocument();
-      expect(screen.getByText('25')).toBeInTheDocument();
-      expect(screen.getByText('3')).toBeInTheDocument();
-      expect(screen.getByText('$35,000')).toBeInTheDocument();
     });
+    
+    expect(screen.getByText('25')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('$35,000')).toBeInTheDocument();
 
     expect(screen.getByText('Total Revenue')).toBeInTheDocument();
     expect(screen.getByText('Total Invoices')).toBeInTheDocument();
@@ -124,10 +125,11 @@ describe('Dashboard Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('INV-2024-0001')).toBeInTheDocument();
-      expect(screen.getByText('INV-2024-0002')).toBeInTheDocument();
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     });
+    
+    expect(screen.getByText('INV-2024-0002')).toBeInTheDocument();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
   });
 
   it('displays invoice statuses with correct styling', async () => {
@@ -138,12 +140,14 @@ describe('Dashboard Component', () => {
     );
 
     await waitFor(() => {
-      const paidBadge = screen.getByText('Paid');
-      const unpaidBadge = screen.getByText('Unpaid');
-      
-      expect(paidBadge).toHaveClass('bg-green-100', 'text-green-800');
-      expect(unpaidBadge).toHaveClass('bg-yellow-100', 'text-yellow-800');
+      expect(screen.getByText('Paid')).toBeInTheDocument();
     });
+    
+    const paidBadge = screen.getByText('Paid');
+    const unpaidBadge = screen.getByText('Unpaid');
+    
+    expect(paidBadge).toHaveClass('bg-green-100', 'text-green-800');
+    expect(unpaidBadge).toHaveClass('bg-yellow-100', 'text-yellow-800');
   });
 
   it('renders monthly revenue chart', async () => {
@@ -155,8 +159,9 @@ describe('Dashboard Component', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('bar-chart')).toBeInTheDocument();
-      expect(screen.getByText('Monthly Revenue')).toBeInTheDocument();
     });
+    
+    expect(screen.getByText('Monthly Revenue')).toBeInTheDocument();
   });
 
   it('navigates to invoices page when "New Invoice" is clicked', async () => {
@@ -167,10 +172,11 @@ describe('Dashboard Component', () => {
     );
 
     await waitFor(() => {
-      const newInvoiceButton = screen.getByText('New Invoice');
-      expect(newInvoiceButton).toBeInTheDocument();
-      expect(newInvoiceButton.closest('a')).toHaveAttribute('href', '/invoices/new');
+      expect(screen.getByText('New Invoice')).toBeInTheDocument();
     });
+    
+    const newInvoiceButton = screen.getByText('New Invoice');
+    expect(newInvoiceButton.closest('a')).toHaveAttribute('href', '/invoices/new');
   });
 
   it('navigates to all invoices when "View all" is clicked', async () => {
@@ -181,10 +187,11 @@ describe('Dashboard Component', () => {
     );
 
     await waitFor(() => {
-      const viewAllLink = screen.getByText('View all');
-      expect(viewAllLink).toBeInTheDocument();
-      expect(viewAllLink.closest('a')).toHaveAttribute('href', '/invoices');
+      expect(screen.getByText('View all')).toBeInTheDocument();
     });
+    
+    const viewAllLink = screen.getByText('View all');
+    expect(viewAllLink.closest('a')).toHaveAttribute('href', '/invoices');
   });
 
   it('handles API errors gracefully', async () => {
@@ -237,10 +244,10 @@ describe('Dashboard Component', () => {
     );
 
     await waitFor(() => {
-      // Check that invoice amounts are formatted as currency
       expect(screen.getByText('$1,500.00')).toBeInTheDocument();
-      expect(screen.getByText('$2,000.00')).toBeInTheDocument();
     });
+    
+    expect(screen.getByText('$2,000.00')).toBeInTheDocument();
   });
 
   it('displays correct welcome message', async () => {
@@ -252,7 +259,8 @@ describe('Dashboard Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
-      expect(screen.getByText("Welcome back! Here's what's happening with your business.")).toBeInTheDocument();
     });
+    
+    expect(screen.getByText("Welcome back! Here's what's happening with your business.")).toBeInTheDocument();
   });
 });

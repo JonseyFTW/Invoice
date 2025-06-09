@@ -1,8 +1,8 @@
-const { QueryInterface, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    console.log('Creating InvoicePhotos table...');
+  up: async (queryInterface, _Sequelize) => {
+    // console.log('Creating InvoicePhotos table...');
     
     await queryInterface.createTable('InvoicePhotos', {
       id: {
@@ -75,12 +75,12 @@ module.exports = {
     await queryInterface.addIndex('InvoicePhotos', ['category']);
     await queryInterface.addIndex('InvoicePhotos', ['uploadedAt']);
 
-    console.log('✅ InvoicePhotos table created successfully');
+    // console.log('✅ InvoicePhotos table created successfully');
   },
 
-  down: async (queryInterface, Sequelize) => {
-    console.log('Dropping InvoicePhotos table...');
+  down: async (queryInterface, _Sequelize) => {
+    // console.log('Dropping InvoicePhotos table...');
     await queryInterface.dropTable('InvoicePhotos');
-    console.log('✅ InvoicePhotos table dropped successfully');
+    // console.log('✅ InvoicePhotos table dropped successfully');
   }
 };

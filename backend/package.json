@@ -106,7 +106,7 @@
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
-    "testMatch": ["<rootDir>/tests/**/*.test.js"],
+    "testMatch": ["<rootDir>/tests/**/*.js", "!<rootDir>/tests/setup.js"],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/models/index.js",
