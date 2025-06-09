@@ -468,20 +468,22 @@ function Invoices() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {formatDate(invoice.dueDate)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4">
                   {/* Invoice Photos */}
                   {invoice.photos && invoice.photos.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex items-center gap-1 min-h-0">
                       {invoice.photos.slice(0, 2).map((photo, index) => (
-                        <PhotoThumbnail
-                          key={index}
-                          src={photo.url || photo.filePath}
-                          alt={`Invoice attachment ${index + 1}`}
-                          className="w-6 h-6"
-                        />
+                        <div key={index} className="flex-shrink-0">
+                          <img
+                            src={photo.url || photo.filePath}
+                            alt={`Invoice attachment ${index + 1}`}
+                            className="w-8 h-8 object-cover rounded border border-gray-300 cursor-pointer hover:border-blue-500 transition-colors"
+                            title="Click to view"
+                          />
+                        </div>
                       ))}
                       {invoice.photos.length > 2 && (
-                        <div className="w-6 h-6 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-600">
+                        <div className="w-8 h-8 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600 flex-shrink-0">
                           +{invoice.photos.length - 2}
                         </div>
                       )}

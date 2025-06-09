@@ -77,7 +77,7 @@ class GeminiService {
           headers: {
             'Content-Type': 'application/json'
           },
-          timeout: 30000
+          timeout: 60000
         }
       );
       
