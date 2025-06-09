@@ -45,7 +45,9 @@
       "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg \"getUserMedia\" pages/)",
       "Bash(npx eslint:*)",
       "Bash(npx babel:*)",
-      "Bash(timeout 30s npm run build)"
+      "Bash(timeout 30s npm run build)",
+      "Bash(npm test)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
