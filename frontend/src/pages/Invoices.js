@@ -22,6 +22,7 @@ import {
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { formatCurrency, formatDate, openAddressInMaps } from '../utils/frontend_utilities';
+import PhotoThumbnail from '../components/shared/PhotoThumbnail';
 
 function Invoices() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -218,6 +219,25 @@ function Invoices() {
           <p className="text-sm text-gray-500">
             Due: {formatDate(invoice.dueDate)}
           </p>
+          
+          {/* Invoice Photos */}
+          {invoice.photos && invoice.photos.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {invoice.photos.slice(0, 3).map((photo, index) => (
+                <PhotoThumbnail
+                  key={index}
+                  src={photo.url || photo.filePath}
+                  alt={`Invoice attachment ${index + 1}`}
+                  className="w-8 h-8"
+                />
+              ))}
+              {invoice.photos.length > 3 && (
+                <div className="w-8 h-8 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-600">
+                  +{invoice.photos.length - 3}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="text-right">
           <p className="text-lg font-bold text-gray-900">
@@ -317,6 +337,9 @@ function Invoices() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Due Date
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Photos
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -382,6 +405,28 @@ function Invoices() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {formatDate(invoice.dueDate)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {/* Invoice Photos */}
+                  {invoice.photos && invoice.photos.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {invoice.photos.slice(0, 2).map((photo, index) => (
+                        <PhotoThumbnail
+                          key={index}
+                          src={photo.url || photo.filePath}
+                          alt={`Invoice attachment ${index + 1}`}
+                          className="w-6 h-6"
+                        />
+                      ))}
+                      {invoice.photos.length > 2 && (
+                        <div className="w-6 h-6 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-600">
+                          +{invoice.photos.length - 2}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-xs">None</span>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-1">

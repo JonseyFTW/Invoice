@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import PhotoThumbnail from '../components/shared/PhotoThumbnail';
 import { openAddressInMaps } from '../utils/frontend_utilities';
 
 const PROPERTY_PHOTO_CATEGORIES = [
@@ -301,6 +302,29 @@ function PropertyDetail() {
                   </>
                 )}
               </p>
+              
+              {/* Recent Photos Summary */}
+              {photos.length > 0 && (
+                <div className="flex items-center space-x-2 mt-2">
+                  <span className="text-sm text-gray-500">Recent photos:</span>
+                  <div className="flex space-x-1">
+                    {photos.slice(0, 3).map((photo) => (
+                      <PhotoThumbnail
+                        key={photo.id}
+                        src={`${process.env.REACT_APP_API_URL.replace('/api', '')}/uploads/property_photos/${photo.filename}`}
+                        alt={photo.description || 'Property photo'}
+                        className="w-8 h-8"
+                        onClick={() => setSelectedPhoto(photo)}
+                      />
+                    ))}
+                    {photos.length > 3 && (
+                      <div className="w-8 h-8 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-600">
+                        +{photos.length - 3}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <button
