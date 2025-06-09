@@ -72,7 +72,14 @@ module.exports = (sequelize) => {
     ],
     getterMethods: {
       url() {
-        const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+        // Try to get backend URL from environment variables
+        let baseUrl = process.env.BACKEND_URL || process.env.RAILWAY_STATIC_URL;
+        
+        // Final fallback for development
+        if (!baseUrl) {
+          baseUrl = 'http://localhost:5000';
+        }
+        
         return `${baseUrl}/uploads/invoice_photos/${this.filename}`;
       }
     },
