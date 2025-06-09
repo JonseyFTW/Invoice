@@ -21,8 +21,10 @@ const app = express();
 // Trust proxy (required for rate limiting behind nginx)
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// Security middleware - Configure helmet to allow cross-origin resources
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
