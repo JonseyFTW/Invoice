@@ -80,6 +80,11 @@ module.exports = (sequelize) => {
           baseUrl = 'http://localhost:5000';
         }
         
+        // Ensure the URL has a protocol
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = `https://${baseUrl}`;
+        }
+        
         return `${baseUrl}/uploads/invoice_photos/${this.filename}`;
       }
     },
