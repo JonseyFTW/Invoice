@@ -8,16 +8,28 @@ class PDFService {
       const logoPath = path.join(__dirname, '../../uploads/logo.png');
       const fallbackPath = path.join(__dirname, '../../../frontend/public/logo.png');
       
+      console.log('Attempting to load logo from:', logoPath);
+      
       let logoBuffer;
       try {
         logoBuffer = await fs.readFile(logoPath);
-      } catch {
-        logoBuffer = await fs.readFile(fallbackPath);
+        console.log('✅ Logo loaded successfully from uploads directory');
+      } catch (uploadError) {
+        console.log('❌ Logo not found in uploads, trying fallback:', fallbackPath);
+        try {
+          logoBuffer = await fs.readFile(fallbackPath);
+          console.log('✅ Logo loaded successfully from fallback location');
+        } catch (fallbackError) {
+          console.log('❌ Fallback logo also not found:', fallbackError.message);
+          throw fallbackError;
+        }
       }
       
-      return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+      const base64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+      console.log('✅ Logo converted to base64, length:', base64.length);
+      return base64;
     } catch (error) {
-      console.log('Logo not found, using text header');
+      console.log('❌ Logo loading failed completely:', error.message);
       return null;
     }
   }
@@ -184,7 +196,7 @@ class PDFService {
         <body>
           <div class="header">
             <div class="logo-section">
-              ${logoBase64 ? `<img src="${logoBase64}" alt="Company Logo" class="logo">` : ''}
+              ${logoBase64 ? `<img src="${logoBase64}" alt="Company Logo" class="logo">` : '<!-- No logo available -->'}
               <div class="company-info">
                 <div class="company-name">${process.env.COMPANY_NAME || 'Home Repair Solutions'}</div>
                 <div class="company-details">

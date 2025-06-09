@@ -7,6 +7,7 @@ const {
   PropertyServiceHistory,
   Invoice, 
   InvoiceLineItem, 
+  InvoicePhoto,
   Expense,
   RecurringTemplate,
   sequelize 
@@ -538,6 +539,7 @@ exports.clearDemoData = async (req, res) => {
 async function clearNonUserData(transaction) {
   // Delete in correct order to respect foreign key constraints
   await InvoiceLineItem.destroy({ where: {}, transaction });
+  await InvoicePhoto.destroy({ where: {}, transaction });
   await PropertyServiceHistory.destroy({ where: {}, transaction });
   await Invoice.destroy({ where: {}, transaction });
   await Expense.destroy({ where: {}, transaction });

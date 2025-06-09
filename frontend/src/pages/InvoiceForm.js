@@ -191,10 +191,25 @@ function InvoiceForm() {
         toast.success('Invoice created successfully');
       }
       
-      // Note: Photo attachment to invoices will be implemented in a future update
-      // For now, photos are kept for reference during invoice creation
-      if (selectedFile) {
-        console.log('Photo will be available for future invoice attachment feature:', selectedFile.name);
+      // Upload photo if one was selected
+      if (selectedFile && invoiceResponse.data.invoice) {
+        try {
+          const formData = new FormData();
+          formData.append('photo', selectedFile);
+          formData.append('description', 'Invoice attachment');
+          formData.append('category', 'receipt');
+          
+          await api.post(`/invoices/${invoiceResponse.data.invoice.id}/photos`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+          
+          toast.success('Photo attached to invoice');
+        } catch (photoError) {
+          console.error('Error uploading photo:', photoError);
+          toast.error('Invoice created but photo upload failed');
+        }
       }
       
       navigate('/invoices');
