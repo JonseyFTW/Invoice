@@ -47,7 +47,8 @@
       "Bash(npx babel:*)",
       "Bash(timeout 30s npm run build)",
       "Bash(npm test)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(npm run test:*)"
     ],
     "deny": []
   }
