@@ -28,6 +28,7 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:3000',
       'https://invoice-frontend-staging.up.railway.app',
+      'https://invoice-frontend-production-4123.up.railway.app',
       process.env.FRONTEND_URL
     ].filter(Boolean);
     
@@ -61,6 +62,7 @@ app.use('/uploads', (req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
     'https://invoice-frontend-staging.up.railway.app',
+    'https://invoice-frontend-production-4123.up.railway.app',
     process.env.FRONTEND_URL
   ].filter(Boolean);
   

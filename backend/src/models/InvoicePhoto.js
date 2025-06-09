@@ -75,9 +75,17 @@ module.exports = (sequelize) => {
         // Try to get backend URL from environment variables
         let baseUrl = process.env.BACKEND_URL || process.env.RAILWAY_STATIC_URL;
         
-        // Railway production fallback
+        // Railway fallback based on environment
         if (!baseUrl && process.env.NODE_ENV === 'production') {
-          baseUrl = 'https://invoice-backend-production-75d7.up.railway.app';
+          // Check if we're on staging or production based on hostname or other env vars
+          const isStaging = process.env.RAILWAY_ENVIRONMENT_NAME?.includes('staging') || 
+                           process.env.FRONTEND_URL?.includes('staging');
+          
+          if (isStaging) {
+            baseUrl = 'https://invoice-backend-staging.up.railway.app';
+          } else {
+            baseUrl = 'https://invoice-backend-production-75d7.up.railway.app';
+          }
         }
         
         // Final fallback for development
