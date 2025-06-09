@@ -70,6 +70,12 @@ module.exports = (sequelize) => {
         fields: ['uploadedAt'],
       },
     ],
+    getterMethods: {
+      url() {
+        const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+        return `${baseUrl}/uploads/invoice_photos/${this.filename}`;
+      }
+    },
   });
 
   return InvoicePhoto;

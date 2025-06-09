@@ -42,7 +42,7 @@ exports.getInvoices = async (req, res, next) => {
         {
           model: InvoicePhoto,
           as: 'photos',
-          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt'],
+          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt', 'url'],
           order: [['uploadedAt', 'DESC']],
         },
       ],
@@ -91,6 +91,7 @@ exports.getInvoice = async (req, res, next) => {
         {
           model: InvoicePhoto,
           as: 'photos',
+          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt', 'url'],
           order: [['uploadedAt', 'DESC']],
         },
       ],
@@ -371,7 +372,13 @@ exports.uploadInvoicePhoto = async (req, res, next) => {
       category,
     });
 
-    res.status(201).json({ photo });
+    // Return photo with URL
+    const photoWithUrl = {
+      ...photo.toJSON(),
+      url: photo.url
+    };
+
+    res.status(201).json({ photo: photoWithUrl });
   } catch (error) {
     // Clean up uploaded file on error
     if (req.file) {
@@ -394,6 +401,7 @@ exports.getInvoicePhotos = async (req, res, next) => {
 
     const photos = await InvoicePhoto.findAll({
       where: whereClause,
+      attributes: ['id', 'filename', 'description', 'category', 'uploadedAt', 'url'],
       order: [['uploadedAt', 'DESC']],
     });
 

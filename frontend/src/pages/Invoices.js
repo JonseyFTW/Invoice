@@ -226,7 +226,7 @@ function Invoices() {
               {invoice.photos.slice(0, 3).map((photo, index) => (
                 <PhotoThumbnail
                   key={index}
-                  src={photo.url || photo.filePath}
+                  src={photo.url}
                   alt={`Invoice attachment ${index + 1}`}
                   className="w-8 h-8"
                 />

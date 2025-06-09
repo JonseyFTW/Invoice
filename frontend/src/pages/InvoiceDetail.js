@@ -412,7 +412,7 @@ function InvoiceDetail() {
                 {invoice.photos.map((photo, index) => (
                   <PhotoThumbnail
                     key={index}
-                    src={photo.url || photo.filePath}
+                    src={photo.url}
                     alt={`Invoice attachment ${index + 1}`}
                     className="w-full aspect-square"
                   />
