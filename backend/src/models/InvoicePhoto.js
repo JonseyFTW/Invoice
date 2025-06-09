@@ -98,7 +98,11 @@ module.exports = (sequelize) => {
           baseUrl = `https://${baseUrl}`;
         }
         
-        return `${baseUrl}/uploads/invoice_photos/${this.filename}`;
+        const finalUrl = `${baseUrl}/uploads/invoice_photos/${this.filename}`;
+        console.log(`PHOTO URL DEBUG - Generated URL: ${finalUrl}`);
+        console.log(`PHOTO URL DEBUG - Base URL: ${baseUrl}, Filename: ${this.filename}`);
+        
+        return finalUrl;
       }
     },
   });
