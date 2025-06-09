@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Save, ArrowLeft, Plus, Trash2, Calculator, Camera, Upload, Sparkles } from 'lucide-react';
@@ -15,6 +15,9 @@ function InvoiceForm() {
   const [calculating, setCalculating] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [parsing, setParsing] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const videoRef = useRef(null);
 
   const {
     register,
@@ -218,7 +221,7 @@ function InvoiceForm() {
     }
   };
 
-  const capturePhoto = async () => {
+  const startCamera = async () => {
     try {
       // Check if camera is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -234,55 +237,8 @@ function InvoiceForm() {
         } 
       });
       
-      // Create video preview modal
-      const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
-      modal.innerHTML = `
-        <div class="bg-white p-4 rounded-lg max-w-md w-full mx-4">
-          <h3 class="text-lg font-semibold mb-4">Capture Receipt</h3>
-          <video id="camera-preview" autoplay playsinline class="w-full rounded border mb-4"></video>
-          <div class="flex space-x-2">
-            <button id="capture-btn" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-              Capture
-            </button>
-            <button id="cancel-btn" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
-              Cancel
-            </button>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(modal);
-      
-      const video = document.getElementById('camera-preview');
-      video.srcObject = stream;
-      
-      const captureBtn = document.getElementById('capture-btn');
-      const cancelBtn = document.getElementById('cancel-btn');
-      
-      captureBtn.onclick = () => {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0);
-        
-        canvas.toBlob((blob) => {
-          const file = new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' });
-          setSelectedFile(file);
-          toast.success('Photo captured successfully!');
-          
-          // Cleanup
-          stream.getTracks().forEach(track => track.stop());
-          document.body.removeChild(modal);
-        }, 'image/jpeg', 0.9);
-      };
-      
-      cancelBtn.onclick = () => {
-        stream.getTracks().forEach(track => track.stop());
-        document.body.removeChild(modal);
-      };
+      setCameraStream(stream);
+      setShowCamera(true);
       
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -295,6 +251,49 @@ function InvoiceForm() {
       }
     }
   };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !cameraStream) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      const file = new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      setSelectedFile(file);
+      toast.success('Photo captured successfully!');
+      closeCamera();
+    }, 'image/jpeg', 0.9);
+  };
+
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  // Effect to set video source when camera stream is available
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   const parseReceiptWithAI = async () => {
     if (!selectedFile) {
@@ -533,7 +532,7 @@ function InvoiceForm() {
                 
                 <button
                   type="button"
-                  onClick={capturePhoto}
+                  onClick={startCamera}
                   className="inline-flex items-center px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
                 >
                   <Camera className="h-4 w-4 mr-2" />
@@ -705,6 +704,37 @@ function InvoiceForm() {
           </button>
         </div>
       </form>
+
+      {/* Camera Modal */}
+      {showCamera && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Capture Receipt</h3>
+            <video 
+              ref={videoRef}
+              autoPlay 
+              playsInline 
+              className="w-full rounded border mb-4"
+              style={{ maxHeight: '300px' }}
+            />
+            <div className="flex space-x-3">
+              <button
+                onClick={capturePhoto}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Camera className="h-4 w-4 mr-2 inline" />
+                Capture
+              </button>
+              <button
+                onClick={closeCamera}
+                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        video { width: 100%; max-width: 400px; border: 1px solid #ccc; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 10px 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .start { background: #4CAF50; color: white; }
+        .capture { background: #2196F3; color: white; }
+        .stop { background: #f44336; color: white; }
+        .result { margin-top: 20px; }
+        canvas { border: 1px solid #ccc; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Camera Test</h1>
+        <p>This test verifies camera functionality similar to the InvoiceForm component.</p>
+        
+        <div>
+            <button class="start" onclick="startCamera()">Start Camera</button>
+            <button class="capture" onclick="capturePhoto()" disabled id="captureBtn">Capture Photo</button>
+            <button class="stop" onclick="stopCamera()" disabled id="stopBtn">Stop Camera</button>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <video id="video" autoplay playsinline style="display: none;"></video>
+        </div>
+        
+        <div class="result">
+            <canvas id="canvas" style="display: none;"></canvas>
+        </div>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        let stream = null;
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const status = document.getElementById('status');
+        const captureBtn = document.getElementById('captureBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        async function startCamera() {
+            try {
+                status.textContent = 'Requesting camera access...';
+                
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Camera not available on this device');
+                }
+
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                video.srcObject = stream;
+                video.style.display = 'block';
+                captureBtn.disabled = false;
+                stopBtn.disabled = false;
+                status.textContent = 'Camera started successfully!';
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                let errorMsg = 'Could not access camera: ';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMsg += 'Camera access denied. Please enable camera permissions.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg += 'No camera found on this device.';
+                } else {
+                    errorMsg += error.message;
+                }
+                
+                status.textContent = errorMsg;
+            }
+        }
+
+        function capturePhoto() {
+            if (!stream || !video.videoWidth) {
+                status.textContent = 'No video stream available or video not ready';
+                return;
+            }
+
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            context.drawImage(video, 0, 0);
+            canvas.style.display = 'block';
+            
+            // Convert to blob and create file
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                status.innerHTML = `Photo captured successfully! <a href="${url}" download="test-photo.jpg">Download</a>`;
+            }, 'image/jpeg', 0.9);
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            video.style.display = 'none';
+            canvas.style.display = 'none';
+            captureBtn.disabled = true;
+            stopBtn.disabled = true;
+            status.textContent = 'Camera stopped.';
+        }
+    </script>
+</body>
+</html>
