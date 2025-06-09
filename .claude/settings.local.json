@@ -34,7 +34,16 @@
       "Bash(curl:*)",
       "Bash(npm run migrate:*)",
       "Bash(pkill:*)",
-      "Bash(DB_HOST=localhost DB_PASS=thisisliterallymypassword JWT_SECRET=2d460c9241c1ac44ed82556a62c61a80970e676a17b23cb43547e8aefecc5025 npm test)"
+      "Bash(DB_HOST=localhost DB_PASS=thisisliterallymypassword JWT_SECRET=2d460c9241c1ac44ed82556a62c61a80970e676a17b23cb43547e8aefecc5025 npm test)",
+      "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 5 -B 5 \"camera|video|capture|getUserMedia|mediaDevices\" pages/CustomerDetail.js pages/PropertyDetail.js pages/InvoiceForm.js)",
+      "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 2 -B 2 \"Take Photo\" pages/InvoiceForm.js)",
+      "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 5 -B 5 \"onClick.*capturePhoto\" pages/InvoiceForm.js)",
+      "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 5 -B 5 \"</div>\" pages/InvoiceForm.js)",
+      "Bash(npx react-scripts build:*)",
+      "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 3 -B 3 \"getUserMedia|video.*camera\" pages/CustomerDetail.js pages/PropertyDetail.js)",
+      "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg \"getUserMedia|video.*camera\" pages/CustomerDetail.js pages/PropertyDetail.js)",
+      "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg \"getUserMedia\" pages/)",
+      "Bash(npx eslint:*)"
     ],
     "deny": []
   }
