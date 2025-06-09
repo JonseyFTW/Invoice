@@ -244,7 +244,7 @@ function Expenses() {
     }
   };
 
-  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalAmount = expenses.reduce((sum, expense) => sum + (parseFloat(expense.amount) || 0), 0);
 
   if (loading && expenses.length === 0) {
     return (
