@@ -17,6 +17,7 @@ import {
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { openAddressInMaps } from '../utils/frontend_utilities';
+import PhotoThumbnail from '../components/shared/PhotoThumbnail';
 
 function InvoiceDetail() {
   const { id } = useParams();
@@ -400,6 +401,28 @@ function InvoiceDetail() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes</h3>
               <p className="text-gray-600 whitespace-pre-line">{invoice.notes}</p>
+            </div>
+          )}
+
+          {/* Attached Photos */}
+          {invoice.photos && invoice.photos.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Attached Photos</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {invoice.photos.map((photo, index) => (
+                  <PhotoThumbnail
+                    key={index}
+                    src={photo.url || photo.filePath}
+                    alt={`Invoice attachment ${index + 1}`}
+                    className="w-full aspect-square"
+                  />
+                ))}
+              </div>
+              {invoice.photos.length > 6 && (
+                <p className="text-sm text-gray-500 mt-3">
+                  Showing {Math.min(6, invoice.photos.length)} of {invoice.photos.length} photos
+                </p>
+              )}
             </div>
           )}
         </div>

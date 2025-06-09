@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Thumbnail Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-section h2 { color: #333; margin-top: 0; }
+        .thumbnail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin: 20px 0; }
+        .thumbnail { 
+            width: 80px; 
+            height: 80px; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            border: 2px solid #ddd; 
+            cursor: pointer; 
+            transition: border-color 0.2s;
+        }
+        .thumbnail:hover { border-color: #2563eb; }
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { 
+            padding: 8px; 
+            margin: 5px 0; 
+            background: #f8f9fa; 
+            border-radius: 4px; 
+            display: flex; 
+            align-items: center;
+        }
+        .feature-list .status { 
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%; 
+            margin-right: 10px;
+        }
+        .implemented { background-color: #22c55e; }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show { display: flex; }
+        .modal img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
+        .modal-close { 
+            position: absolute; 
+            top: 20px; 
+            right: 30px; 
+            color: white; 
+            font-size: 30px; 
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sample-section { background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .invoice-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .photo-summary { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .mini-thumbnail { width: 24px; height: 24px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; }
+        .photo-count { 
+            width: 24px; 
+            height: 24px; 
+            background: #e5e7eb; 
+            border-radius: 4px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 10px; 
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <h1>📸 Photo Thumbnail System Test</h1>
+    <p>This page demonstrates the photo thumbnail functionality implemented across the Invoice Management System.</p>
+
+    <!-- Feature Overview -->
+    <div class="test-section">
+        <h2>✅ Implemented Features</h2>
+        <ul class="feature-list">
+            <li><span class="status implemented"></span>Camera capture with live preview in InvoiceForm</li>
+            <li><span class="status implemented"></span>Photo thumbnail preview after capture/upload</li>
+            <li><span class="status implemented"></span>Click-to-enlarge modal functionality</li>
+            <li><span class="status implemented"></span>Remove photo button with confirmation</li>
+            <li><span class="status implemented"></span>Reusable PhotoThumbnail component</li>
+            <li><span class="status implemented"></span>Invoice photo thumbnails in lists and details</li>
+            <li><span class="status implemented"></span>Customer photo summary in header</li>
+            <li><span class="status implemented"></span>Property photo summary in header</li>
+        </ul>
+    </div>
+
+    <!-- Sample Data -->
+    <div class="test-section">
+        <h2>📋 Sample Implementation Examples</h2>
+        
+        <div class="sample-section">
+            <h3>InvoiceForm - After Photo Capture</h3>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="position: relative;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iOCIgZmlsbD0iIzMzNzNkYyIvPgo8dGV4dCB4PSI0MCIgeT0iNDUiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjEyIj5SZWNlaXB0PC90ZXh0Pgo8L3N2Zz4K" 
+                         alt="Receipt preview" 
+                         class="thumbnail"
+                         onclick="enlargeImage(this.src)">
+                    <button style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; border: none; cursor: pointer; font-size: 12px;">×</button>
+                </div>
+                <div>
+                    <p style="margin: 0; font-size: 14px; color: #666;">receipt-2024-001.jpg</p>
+                    <button style="padding: 6px 12px; background: #7c3aed; color: white; border: none; border-radius: 6px; font-size: 12px; margin-top: 5px;">✨ Parse with AI</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sample-section">
+            <h3>Invoice List - With Photo Thumbnails</h3>
+            <div class="invoice-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <h4 style="margin: 0; color: #2563eb;">INV-2024001</h4>
+                        <p style="margin: 5px 0; color: #666;">Greenfield Property Management</p>
+                        <p style="margin: 5px 0; color: #666; font-size: 14px;">Due: Dec 15, 2024</p>
+                        <div class="photo-summary">
+                            <span style="font-size: 12px; color: #9ca3af;">Photos:</span>
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzMzNzNkYyIvPgo8L3N2Zz4K" class="mini-thumbnail" onclick="enlargeImage(this.src)">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzEwYjk4MSIvPgo8L3N2Zz4K" class="mini-thumbnail" onclick="enlargeImage(this.src)">
+                            <div class="photo-count">+2</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-size: 18px; font-weight: bold;">$450.00</p>
+                        <span style="background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 12px; font-size: 12px;">Unpaid</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sample-section">
+            <h3>Customer/Property Header - Photo Summary</h3>
+            <div style="background: white; padding: 20px; border-radius: 8px;">
+                <h2 style="margin: 0; font-size: 24px;">Riverside Cottage</h2>
+                <p style="margin: 5px 0; color: #666;">Property of <span style="color: #2563eb;">Greenfield Property Management</span></p>
+                <div class="photo-summary">
+                    <span style="font-size: 14px; color: #9ca3af;">Recent photos:</span>
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzMzNzNkYyIvPgo8L3N2Zz4K" 
+                         style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; cursor: pointer;" 
+                         onclick="enlargeImage(this.src)">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzEwYjk4MSIvPgo8L3N2Zz4K" 
+                         style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; cursor: pointer;" 
+                         onclick="enlargeImage(this.src)">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iI2Y1OWU0YiIvPgo8L3N2Zz4K" 
+                         style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; cursor: pointer;" 
+                         onclick="enlargeImage(this.src)">
+                    <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6b7280;">+5</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Details -->
+    <div class="test-section">
+        <h2>🔧 PhotoThumbnail Component Features</h2>
+        <ul>
+            <li><strong>Responsive sizing:</strong> Configurable via className prop</li>
+            <li><strong>Click to enlarge:</strong> Built-in modal with backdrop click to close</li>
+            <li><strong>Remove functionality:</strong> Optional remove button with callback</li>
+            <li><strong>Custom click handler:</strong> Override default behavior if needed</li>
+            <li><strong>Hover effects:</strong> Border color changes on hover</li>
+            <li><strong>Accessibility:</strong> Proper alt text and title attributes</li>
+        </ul>
+    </div>
+
+    <!-- Test Gallery -->
+    <div class="test-section">
+        <h2>🖼️ Interactive Test Gallery</h2>
+        <p>Click any thumbnail below to test the enlargement functionality:</p>
+        <div class="thumbnail-grid">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiByeD0iMTAiIGZpbGw9IiMzMzczZGMiLz4KPHR5cGUgeD0iMTAwIiB5PSI5MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPkJlZm9yZTwvdGV4dD4KPHR5cGUgeD0iMTAwIiB5PSIxMTAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0Ij5QaG90bzwvdGV4dD4KPHR5cGUgeD0iMTAwIiB5PSIxMzAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0Ij4jMTwvdGV4dD4KPC9zdmc+Cg==" 
+                 class="thumbnail" 
+                 alt="Sample photo 1"
+                 onclick="enlargeImage(this.src)">
+            
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiByeD0iMTAiIGZpbGw9IiMxMGI5ODEiLz4KPHR5cGUgeD0iMTAwIiB5PSI5MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPkFmdGVyPC90ZXh0Pgo8dHlwZSB4PSIxMDAiIHk9IjExMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPlBob3RvPC90ZXh0Pgo8dHlwZSB4PSIxMDAiIHk9IjEzMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPiMyPC90ZXh0Pgo8L3N2Zz4K" 
+                 class="thumbnail" 
+                 alt="Sample photo 2"
+                 onclick="enlargeImage(this.src)">
+            
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiByeD0iMTAiIGZpbGw9IiNmNTllNGIiLz4KPHR5cGUgeD0iMTAwIiB5PSI5MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPlJlY2VpcHQ8L3RleHQ+Cjx0eXBlIHg9IjEwMCIgeT0iMTEwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCI+SW1hZ2U8L3RleHQ+Cjx0eXBlIHg9IjEwMCIgeT0iMTMwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCI+IzM8L3RleHQ+Cjwvc3ZnPgo=" 
+                 class="thumbnail" 
+                 alt="Sample photo 3"
+                 onclick="enlargeImage(this.src)">
+            
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiByeD0iMTAiIGZpbGw9IiNlZjQ0NDQiLz4KPHR5cGUgeD0iMTAwIiB5PSI5MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTQiPkRhbWFnZTwvdGV4dD4KPHR5cGUgeD0iMTAwIiB5PSIxMTAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0Ij5QaG90bzwvdGV4dD4KPHR5cGUgeD0iMTAwIiB5PSIxMzAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0Ij4jNDwvdGV4dD4KPC9zdmc+Cg==" 
+                 class="thumbnail" 
+                 alt="Sample photo 4"
+                 onclick="enlargeImage(this.src)">
+        </div>
+    </div>
+
+    <!-- Modal for enlarged images -->
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <img id="enlargedImage" src="" alt="Enlarged view">
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Implementation Summary</h2>
+        <p><strong>The photo thumbnail system has been successfully implemented with the following components:</strong></p>
+        <ol>
+            <li><strong>InvoiceForm:</strong> Live camera capture → thumbnail preview → click to enlarge</li>
+            <li><strong>Invoice Lists:</strong> Photo column showing up to 2-3 thumbnails per invoice</li>
+            <li><strong>Invoice Details:</strong> Full photo gallery section with grid layout</li>
+            <li><strong>Customer/Property Headers:</strong> Recent photos summary with quick access</li>
+            <li><strong>Reusable Component:</strong> PhotoThumbnail component for consistent behavior</li>
+        </ol>
+        
+        <p><strong>Ready for backend integration:</strong> When invoice photo storage is added to the backend, the frontend is ready to display and interact with the photos seamlessly.</p>
+    </div>
+
+    <script>
+        function enlargeImage(src) {
+            document.getElementById('enlargedImage').src = src;
+            document.getElementById('imageModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('show');
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

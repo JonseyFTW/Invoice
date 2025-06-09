@@ -4,6 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { Save, ArrowLeft, Plus, Trash2, Calculator, Camera, Upload, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import PhotoThumbnail from '../components/shared/PhotoThumbnail';
 
 function InvoiceForm() {
   const { id } = useParams();
@@ -17,6 +18,7 @@ function InvoiceForm() {
   const [parsing, setParsing] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const videoRef = useRef(null);
 
   const {
@@ -215,6 +217,13 @@ function InvoiceForm() {
     if (file) {
       if (file.type.startsWith('image/')) {
         setSelectedFile(file);
+        
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPhotoPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
       } else {
         toast.error('Please select an image file');
       }
@@ -266,6 +275,11 @@ function InvoiceForm() {
     canvas.toBlob((blob) => {
       const file = new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' });
       setSelectedFile(file);
+      
+      // Create preview URL from canvas
+      const previewUrl = canvas.toDataURL('image/jpeg', 0.9);
+      setPhotoPreview(previewUrl);
+      
       toast.success('Photo captured successfully!');
       closeCamera();
     }, 'image/jpeg', 0.9);
@@ -278,6 +292,12 @@ function InvoiceForm() {
     }
     setShowCamera(false);
   };
+
+  const removePhoto = () => {
+    setSelectedFile(null);
+    setPhotoPreview(null);
+  };
+
 
   // Effect to set video source when camera stream is available
   useEffect(() => {
@@ -540,29 +560,41 @@ function InvoiceForm() {
                 </button>
               </div>
               
-              {selectedFile && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">
-                    Selected: {selectedFile.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={parseReceiptWithAI}
-                    disabled={parsing}
-                    className="inline-flex items-center px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    {parsing ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Parsing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Parse with AI
-                      </>
-                    )}
-                  </button>
+              {selectedFile && photoPreview && (
+                <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4">
+                  {/* Photo Thumbnail */}
+                  <PhotoThumbnail
+                    src={photoPreview}
+                    alt="Receipt preview"
+                    showRemove={true}
+                    onRemove={removePhoto}
+                    className="w-20 h-20"
+                  />
+                  
+                  {/* File Info and AI Parse Button */}
+                  <div className="flex flex-col space-y-2">
+                    <span className="text-sm text-gray-600">
+                      {selectedFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={parseReceiptWithAI}
+                      disabled={parsing}
+                      className="inline-flex items-center px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {parsing ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Parsing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Parse with AI
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
