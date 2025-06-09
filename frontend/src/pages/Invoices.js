@@ -41,10 +41,14 @@ function Invoices() {
     totalCount: 0,
     limit: 10
   });
+  const [sorting, setSorting] = useState({
+    field: searchParams.get('sortBy') || 'invoiceDate',
+    direction: searchParams.get('sortDir') || 'desc'
+  });
 
   useEffect(() => {
     fetchInvoices();
-  }, [pagination.currentPage, filters]);
+  }, [pagination.currentPage, filters, sorting]);
 
   const fetchInvoices = async () => {
     try {
@@ -52,6 +56,8 @@ function Invoices() {
       const params = new URLSearchParams({
         page: pagination.currentPage.toString(),
         limit: pagination.limit.toString(),
+        sortBy: sorting.field,
+        sortDir: sorting.direction,
         ...(filters.search && { search: filters.search }),
         ...(filters.status && { status: filters.status }),
         ...(filters.customerId && { customerId: filters.customerId })
@@ -74,6 +80,8 @@ function Invoices() {
       if (filters.customerId) newSearchParams.set('customerId', filters.customerId);
       else newSearchParams.delete('customerId');
       newSearchParams.set('page', pagination.currentPage.toString());
+      newSearchParams.set('sortBy', sorting.field);
+      newSearchParams.set('sortDir', sorting.direction);
       setSearchParams(newSearchParams);
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -159,6 +167,24 @@ function Invoices() {
 
   const handlePageChange = (newPage) => {
     setPagination(prev => ({ ...prev, currentPage: newPage }));
+  };
+
+  const handleSort = (field) => {
+    setSorting(prev => ({
+      field,
+      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+    // Reset to first page when sorting changes
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+
+  const getSortIcon = (field) => {
+    if (sorting.field !== field) {
+      return <span className="text-gray-400">↕</span>;
+    }
+    return sorting.direction === 'asc' ? 
+      <span className="text-blue-600">↑</span> : 
+      <span className="text-blue-600">↓</span>;
   };
 
   const getStatusColor = (status) => {
@@ -320,22 +346,58 @@ function Invoices() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Invoice
+                <button 
+                  onClick={() => handleSort('invoiceNumber')}
+                  className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                >
+                  <span>Invoice</span>
+                  {getSortIcon('invoiceNumber')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Customer
+                <button 
+                  onClick={() => handleSort('customer.name')}
+                  className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                >
+                  <span>Customer</span>
+                  {getSortIcon('customer.name')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Property
+                <button 
+                  onClick={() => handleSort('property.name')}
+                  className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                >
+                  <span>Property</span>
+                  {getSortIcon('property.name')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Amount
+                <button 
+                  onClick={() => handleSort('grandTotal')}
+                  className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                >
+                  <span>Amount</span>
+                  {getSortIcon('grandTotal')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                <button 
+                  onClick={() => handleSort('status')}
+                  className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                >
+                  <span>Status</span>
+                  {getSortIcon('status')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Due Date
+                <button 
+                  onClick={() => handleSort('dueDate')}
+                  className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                >
+                  <span>Due Date</span>
+                  {getSortIcon('dueDate')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Photos
