@@ -43,6 +43,9 @@ class PDFService {
     try {
       const page = await browser.newPage();
       const logoBase64 = await this.getLogoBase64();
+      
+      console.log('PDF Generation - Logo loaded:', logoBase64 ? 'YES' : 'NO');
+      console.log('PDF Generation - Logo length:', logoBase64 ? logoBase64.length : 'N/A');
 
       const html = this.generateInvoiceHTML(invoice, logoBase64);
       await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -196,15 +199,25 @@ class PDFService {
         <body>
           <div class="header">
             <div class="logo-section">
-              ${logoBase64 ? `<img src="${logoBase64}" alt="Company Logo" class="logo">` : '<!-- No logo available -->'}
-              <div class="company-info">
-                <div class="company-name">${process.env.COMPANY_NAME || 'Home Repair Solutions'}</div>
-                <div class="company-details">
-                  ${process.env.COMPANY_ADDRESS || 'Your Business Address'}<br>
-                  ${process.env.COMPANY_PHONE || 'Phone: (555) 123-4567'} | 
-                  ${process.env.COMPANY_EMAIL || 'Email: info@homerepair.com'}
+              ${logoBase64 ? `
+                <img src="${logoBase64}" alt="Company Logo" class="logo">
+                <div class="company-info">
+                  <div class="company-details">
+                    ${process.env.COMPANY_ADDRESS || 'Your Business Address'}<br>
+                    ${process.env.COMPANY_PHONE || 'Phone: (555) 123-4567'} | 
+                    ${process.env.COMPANY_EMAIL || 'Email: info@homerepair.com'}
+                  </div>
                 </div>
-              </div>
+              ` : `
+                <div class="company-info">
+                  <div class="company-name">${process.env.COMPANY_NAME || 'Home Repair Solutions'}</div>
+                  <div class="company-details">
+                    ${process.env.COMPANY_ADDRESS || 'Your Business Address'}<br>
+                    ${process.env.COMPANY_PHONE || 'Phone: (555) 123-4567'} | 
+                    ${process.env.COMPANY_EMAIL || 'Email: info@homerepair.com'}
+                  </div>
+                </div>
+              `}
             </div>
           </div>
 
