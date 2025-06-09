@@ -57,7 +57,7 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static file serving with CORS
+// Static file serving with CORS - Allow all origins for static files
 app.use('/uploads', (req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
@@ -67,9 +67,21 @@ app.use('/uploads', (req, res, next) => {
   ].filter(Boolean);
   
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  console.log(`STATIC CORS DEBUG - Request from origin: ${origin}`);
+  
+  // Always set CORS headers for static files
+  if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
+    console.log(`STATIC CORS DEBUG - Origin allowed: ${origin}`);
+  } else if (!origin) {
+    // For image requests without origin, allow all (this is safe for public static files)
+    res.header('Access-Control-Allow-Origin', '*');
+    console.log('STATIC CORS DEBUG - No origin, setting wildcard');
+  } else {
+    console.log(`STATIC CORS DEBUG - Unknown origin, setting wildcard: ${origin}`);
+    res.header('Access-Control-Allow-Origin', '*');
   }
+  
   res.header('Access-Control-Allow-Methods', 'GET');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   next();
