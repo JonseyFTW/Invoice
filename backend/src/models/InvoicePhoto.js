@@ -75,6 +75,11 @@ module.exports = (sequelize) => {
         // Try to get backend URL from environment variables
         let baseUrl = process.env.BACKEND_URL || process.env.RAILWAY_STATIC_URL;
         
+        // Railway production fallback
+        if (!baseUrl && process.env.NODE_ENV === 'production') {
+          baseUrl = 'https://invoice-backend-production-75d7.up.railway.app';
+        }
+        
         // Final fallback for development
         if (!baseUrl) {
           baseUrl = 'http://localhost:5000';
