@@ -10,7 +10,7 @@ const emailService = require('../services/emailService');
 exports.getInvoices = async (req, res, next) => {
   try {
     const {
-      page = 1, limit = 10, status, customerId, propertyId, search,
+      page = 1, limit = 10, status, customerId, propertyId, search, sortBy = 'invoiceDate', sortDir = 'desc',
     } = req.query;
     const offset = (page - 1) * limit;
 
@@ -20,6 +20,25 @@ exports.getInvoices = async (req, res, next) => {
     if (propertyId) whereClause.propertyId = propertyId;
     if (search) {
       whereClause.invoiceNumber = { [Op.iLike]: `%${search}%` };
+    }
+
+    // Handle sorting - map frontend fields to database fields/includes
+    let orderClause = [];
+    const direction = sortDir.toUpperCase();
+    
+    switch (sortBy) {
+      case 'customer.name':
+        orderClause = [[{ model: Customer, as: 'customer' }, 'name', direction]];
+        break;
+      case 'property.name':
+        orderClause = [[{ model: Property, as: 'property' }, 'name', direction]];
+        break;
+      case 'grandTotal':
+        // For calculated fields, we'll sort by a related field or handle in app
+        orderClause = [['invoiceDate', direction]]; // Fallback to date for now
+        break;
+      default:
+        orderClause = [[sortBy, direction]];
     }
 
     const { count, rows: invoices } = await Invoice.findAndCountAll({
@@ -48,7 +67,7 @@ exports.getInvoices = async (req, res, next) => {
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['invoiceDate', 'DESC']],
+      order: orderClause,
     });
 
     // Add calculated totals
