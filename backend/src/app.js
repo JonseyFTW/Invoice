@@ -24,7 +24,23 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://invoice-frontend-staging.up.railway.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
   credentials: true,
 }));
 
@@ -40,8 +56,22 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static file serving
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Static file serving with CORS
+app.use('/uploads', (req, res, next) => {
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://invoice-frontend-staging.up.railway.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean);
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(path.join(__dirname, '../uploads')));
 
 // Logging middleware
 app.use((req, res, next) => {

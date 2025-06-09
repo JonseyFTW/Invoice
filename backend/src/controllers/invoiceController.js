@@ -1,7 +1,7 @@
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 const {
-  Invoice, InvoiceLineItem, Customer, Property, PropertyServiceHistory,
+  Invoice, InvoiceLineItem, InvoicePhoto, Customer, Property, PropertyServiceHistory,
 } = require('../models');
 const { generateInvoiceNumber } = require('../utils/invoiceUtils');
 const pdfService = require('../services/pdfService');
@@ -39,6 +39,12 @@ exports.getInvoices = async (req, res, next) => {
           model: InvoiceLineItem,
           as: 'lineItems',
         },
+        {
+          model: InvoicePhoto,
+          as: 'photos',
+          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt'],
+          order: [['uploadedAt', 'DESC']],
+        },
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
@@ -46,12 +52,22 @@ exports.getInvoices = async (req, res, next) => {
     });
 
     // Add calculated totals
-    const invoicesWithTotals = invoices.map((invoice) => ({
-      ...invoice.toJSON(),
-      subtotal: invoice.getSubtotal(),
-      taxAmount: invoice.getTaxAmount(),
-      grandTotal: invoice.getGrandTotal(),
-    }));
+    const invoicesWithTotals = invoices.map((invoice) => {
+      const invoiceJson = invoice.toJSON();
+      // Ensure photo URLs are included
+      if (invoiceJson.photos) {
+        invoiceJson.photos = invoiceJson.photos.map(photo => ({
+          ...photo,
+          url: invoice.photos.find(p => p.id === photo.id)?.url
+        }));
+      }
+      return {
+        ...invoiceJson,
+        subtotal: invoice.getSubtotal(),
+        taxAmount: invoice.getTaxAmount(),
+        grandTotal: invoice.getGrandTotal(),
+      };
+    });
 
     res.json({
       invoices: invoicesWithTotals,
@@ -82,6 +98,12 @@ exports.getInvoice = async (req, res, next) => {
           as: 'lineItems',
           order: [['createdAt', 'ASC']],
         },
+        {
+          model: InvoicePhoto,
+          as: 'photos',
+          attributes: ['id', 'filename', 'description', 'category', 'uploadedAt'],
+          order: [['uploadedAt', 'DESC']],
+        },
       ],
     });
 
@@ -89,8 +111,17 @@ exports.getInvoice = async (req, res, next) => {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
+    const invoiceJson = invoice.toJSON();
+    // Ensure photo URLs are included
+    if (invoiceJson.photos) {
+      invoiceJson.photos = invoiceJson.photos.map(photo => ({
+        ...photo,
+        url: invoice.photos.find(p => p.id === photo.id)?.url
+      }));
+    }
+    
     const invoiceWithTotals = {
-      ...invoice.toJSON(),
+      ...invoiceJson,
       subtotal: invoice.getSubtotal(),
       taxAmount: invoice.getTaxAmount(),
       grandTotal: invoice.getGrandTotal(),
@@ -326,6 +357,104 @@ exports.sendEmail = async (req, res, next) => {
     await invoice.update({ sentDate: new Date() });
 
     res.json({ message: 'Invoice sent successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Invoice Photos Methods
+exports.uploadInvoicePhoto = async (req, res, next) => {
+  try {
+    const { id: invoiceId } = req.params;
+    const { description, category = 'receipt' } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No photo uploaded' });
+    }
+
+    const invoice = await Invoice.findByPk(invoiceId);
+    if (!invoice) {
+      // Clean up uploaded file
+      const fs = require('fs').promises;
+      await fs.unlink(req.file.path).catch(() => {});
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    const photo = await InvoicePhoto.create({
+      invoiceId,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      filePath: req.file.path,
+      mimeType: req.file.mimetype,
+      fileSize: req.file.size,
+      description,
+      category,
+    });
+
+    // Return photo with URL
+    const photoWithUrl = {
+      ...photo.toJSON(),
+      url: photo.url
+    };
+
+    res.status(201).json({ photo: photoWithUrl });
+  } catch (error) {
+    // Clean up uploaded file on error
+    if (req.file) {
+      const fs = require('fs').promises;
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+    next(error);
+  }
+};
+
+exports.getInvoicePhotos = async (req, res, next) => {
+  try {
+    const { id: invoiceId } = req.params;
+    const { category } = req.query;
+
+    const whereClause = { invoiceId };
+    if (category) {
+      whereClause.category = category;
+    }
+
+    const photos = await InvoicePhoto.findAll({
+      where: whereClause,
+      attributes: ['id', 'filename', 'description', 'category', 'uploadedAt'],
+      order: [['uploadedAt', 'DESC']],
+    });
+
+    // Ensure URLs are included
+    const photosWithUrls = photos.map(photo => ({
+      ...photo.toJSON(),
+      url: photo.url
+    }));
+    
+    res.json({ photos: photosWithUrls });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteInvoicePhoto = async (req, res, next) => {
+  try {
+    const { photoId } = req.params;
+
+    const photo = await InvoicePhoto.findByPk(photoId);
+    if (!photo) {
+      return res.status(404).json({ message: 'Photo not found' });
+    }
+
+    // Delete file from filesystem
+    const fs = require('fs').promises;
+    try {
+      await fs.unlink(photo.filePath);
+    } catch (error) {
+      console.error(`Failed to delete photo file: ${photo.filePath}`);
+    }
+
+    await photo.destroy();
+    res.json({ message: 'Photo deleted successfully' });
   } catch (error) {
     next(error);
   }

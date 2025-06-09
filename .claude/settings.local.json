@@ -43,7 +43,11 @@
       "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg -A 3 -B 3 \"getUserMedia|video.*camera\" pages/CustomerDetail.js pages/PropertyDetail.js)",
       "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg \"getUserMedia|video.*camera\" pages/CustomerDetail.js pages/PropertyDetail.js)",
       "Bash(/home/jonsey/.nvm/versions/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg \"getUserMedia\" pages/)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npx babel:*)",
+      "Bash(timeout 30s npm run build)",
+      "Bash(npm test)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

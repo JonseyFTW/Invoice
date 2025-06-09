@@ -40,7 +40,7 @@ function InvoiceForm() {
         {
           description: '',
           quantity: 1,
-          unitPrice: 0,
+          unitPrice: '',
           lineTotal: 0
         }
       ]
@@ -151,9 +151,9 @@ function InvoiceForm() {
   };
 
   const getSubtotal = () => {
-    return watchedLineItems?.reduce((sum, item) => {
+    return watchedLineItems ? watchedLineItems.reduce((sum, item) => {
       return sum + (parseFloat(item.lineTotal) || 0);
-    }, 0) || 0;
+    }, 0) : 0;
   };
 
   const getTaxAmount = () => {
@@ -181,29 +181,60 @@ function InvoiceForm() {
         }))
       };
       
+      let invoiceResponse;
+      
       if (isEdit) {
-        await api.put(`/invoices/${id}`, processedData);
+        invoiceResponse = await api.put(`/invoices/${id}`, processedData);
         toast.success('Invoice updated successfully');
       } else {
-        await api.post('/invoices', processedData);
+        invoiceResponse = await api.post('/invoices', processedData);
         toast.success('Invoice created successfully');
+      }
+      
+      // Upload photo if one was selected
+      if (selectedFile && invoiceResponse.data.invoice) {
+        try {
+          const formData = new FormData();
+          formData.append('photo', selectedFile);
+          formData.append('description', 'Invoice attachment');
+          formData.append('category', 'receipt');
+          
+          await api.post(`/invoices/${invoiceResponse.data.invoice.id}/photos`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+          
+          toast.success('Photo attached to invoice');
+        } catch (photoError) {
+          console.error('Error uploading photo:', photoError);
+          toast.error('Invoice created but photo upload failed');
+        }
       }
       
       navigate('/invoices');
     } catch (error) {
       console.error('Error saving invoice:', error);
+      toast.error('Failed to save invoice');
     } finally {
       setLoading(false);
     }
   };
 
   const addLineItem = () => {
-    append({
-      description: '',
-      quantity: 1,
-      unitPrice: 0,
-      lineTotal: 0
-    });
+    // Check if the last line item has any data before adding a new one
+    const lastIndex = fields.length - 1;
+    const lastItem = watch(`lineItems.${lastIndex}`);
+    
+    // Only add a new item if the last one has a description or non-zero values
+    if (lastItem && (lastItem.description || lastItem.quantity > 1 || lastItem.unitPrice > 0)) {
+      append({
+        description: '',
+        quantity: 1,
+        unitPrice: '',
+        lineTotal: 0
+      });
+    }
   };
 
   const removeLineItem = (index) => {
@@ -346,7 +377,8 @@ function InvoiceForm() {
         });
 
         toast.success('Receipt parsed successfully! Review the line items below.');
-        setSelectedFile(null);
+        // Keep the photo attached to the invoice - don't clear it
+        // setSelectedFile(null);
       } else {
         toast.error('Could not parse receipt. Please try again or add items manually.');
       }
@@ -631,6 +663,12 @@ function InvoiceForm() {
                       required: 'Quantity is required',
                       min: { value: 0, message: 'Quantity must be positive' }
                     })}
+                    onChange={(e) => {
+                      const quantity = parseFloat(e.target.value) || 0;
+                      setValue(`lineItems.${index}.quantity`, quantity);
+                      const unitPrice = parseFloat(watch(`lineItems.${index}.unitPrice`)) || 0;
+                      setValue(`lineItems.${index}.lineTotal`, quantity * unitPrice);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -648,6 +686,17 @@ function InvoiceForm() {
                       required: 'Unit price is required',
                       min: { value: 0, message: 'Unit price must be positive' }
                     })}
+                    onFocus={(e) => {
+                      if (e.target.value === '0') {
+                        e.target.select();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const unitPrice = parseFloat(e.target.value) || 0;
+                      setValue(`lineItems.${index}.unitPrice`, unitPrice);
+                      const quantity = parseFloat(watch(`lineItems.${index}.quantity`)) || 0;
+                      setValue(`lineItems.${index}.lineTotal`, quantity * unitPrice);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>

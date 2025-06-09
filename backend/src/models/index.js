@@ -27,6 +27,7 @@ const PropertyNote = require('./PropertyNote')(sequelize);
 const PropertyServiceHistory = require('./PropertyServiceHistory')(sequelize);
 const Invoice = require('./Invoice')(sequelize);
 const InvoiceLineItem = require('./InvoiceLineItem')(sequelize);
+const InvoicePhoto = require('./InvoicePhoto')(sequelize);
 const Expense = require('./Expense')(sequelize);
 const RecurringTemplate = require('./RecurringTemplate')(sequelize);
 
@@ -38,6 +39,10 @@ Invoice.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
 // Invoice - InvoiceLineItem (One to Many)
 Invoice.hasMany(InvoiceLineItem, { foreignKey: 'invoiceId', as: 'lineItems', onDelete: 'CASCADE' });
 InvoiceLineItem.belongsTo(Invoice, { foreignKey: 'invoiceId', as: 'invoice' });
+
+// Invoice - InvoicePhoto (One to Many)
+Invoice.hasMany(InvoicePhoto, { foreignKey: 'invoiceId', as: 'photos', onDelete: 'CASCADE' });
+InvoicePhoto.belongsTo(Invoice, { foreignKey: 'invoiceId', as: 'invoice' });
 
 // Invoice - Expense (One to Many)
 Invoice.hasMany(Expense, { foreignKey: 'invoiceId', as: 'expenses' });
@@ -95,6 +100,7 @@ module.exports = {
   PropertyServiceHistory,
   Invoice,
   InvoiceLineItem,
+  InvoicePhoto,
   Expense,
   RecurringTemplate,
 };

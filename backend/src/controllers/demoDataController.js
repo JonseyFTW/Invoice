@@ -7,6 +7,7 @@ const {
   PropertyServiceHistory,
   Invoice, 
   InvoiceLineItem, 
+  InvoicePhoto,
   Expense,
   RecurringTemplate,
   sequelize 
@@ -316,7 +317,8 @@ exports.generateDemoData = async (req, res) => {
       
       const property = await Property.create({
         ...propertyData,
-        customerId: customer.id
+        customerId: customer.id,
+        isActive: true
       }, { transaction });
       properties.push(property);
     }
@@ -356,11 +358,18 @@ exports.generateDemoData = async (req, res) => {
     const invoices = [];
     for (let i = 0; i < 45; i++) {
       const customer = customers[Math.floor(Math.random() * customers.length)];
+      console.log(`Creating invoice ${i+1} for customer ${customer.id}`);
       const customerProperties = properties.filter(p => p.customerId === customer.id);
-      const property = customerProperties[Math.floor(Math.random() * customerProperties.length)];
+      const property = customerProperties.length > 0 ? customerProperties[Math.floor(Math.random() * customerProperties.length)] : null;
       
       const invoiceDate = subDays(new Date(), Math.floor(Math.random() * 365));
       const dueDate = addDays(invoiceDate, 30);
+      
+      // Verify customer exists before creating invoice
+      if (!customer || !customer.id) {
+        console.error(`Invalid customer at index ${i}`);
+        continue;
+      }
       
       const invoice = await Invoice.create({
         invoiceNumber: `INV-${String(2024000 + i).padStart(7, '0')}`,
@@ -530,6 +539,7 @@ exports.clearDemoData = async (req, res) => {
 async function clearNonUserData(transaction) {
   // Delete in correct order to respect foreign key constraints
   await InvoiceLineItem.destroy({ where: {}, transaction });
+  await InvoicePhoto.destroy({ where: {}, transaction });
   await PropertyServiceHistory.destroy({ where: {}, transaction });
   await Invoice.destroy({ where: {}, transaction });
   await Expense.destroy({ where: {}, transaction });
